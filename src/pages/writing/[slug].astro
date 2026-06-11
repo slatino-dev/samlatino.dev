@@ -1,0 +1,21 @@
+---
+/**
+ * /writing/<slug>/ — one statically generated post per `writing` collection
+ * entry, rendered by ProseLayout. The slug comes from frontmatter (not the
+ * filename) so entries can move on disk freely.
+ */
+import { getCollection } from 'astro:content';
+import ProseLayout from '../../layouts/ProseLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('writing');
+  return posts.map((entry) => ({
+    params: { slug: entry.data.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+---
+
+<ProseLayout entry={entry} />

@@ -1,0 +1,52 @@
+---
+/**
+ * /writing/ — the post index. Date-sorted, dense, no pagination until the
+ * archive earns one.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+
+const posts = (await getCollection('writing')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+---
+
+<BaseLayout
+  title="writing — Sam Latino"
+  description="Notes from building agent systems, evals, and self-hosted LLM infrastructure. Rust + Python."
+>
+  <section class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <p class="prompt m-0 text-xs">
+      <span class="prompt-user">sam@latino</span><span class="prompt-sep"
+        >:</span
+      ><span class="prompt-path">~/writing</span><span class="prompt-sigil"
+        >$</span
+      >
+      <span class="text-text-muted">ls -lt</span>
+    </p>
+
+    <h1 class="mt-5 mb-0 text-2xl font-semibold md:text-3xl">writing</h1>
+    <p class="mt-3 mb-0 max-w-[64ch] text-base text-text-muted">
+      Notes from building agent systems, evals, and self-hosted LLM
+      infrastructure. Every post is backed by a repo you can clone and a case
+      study you can check it against.
+    </p>
+
+    <div
+      class="mt-8 flex items-baseline justify-between border-b border-border pb-2"
+    >
+      <span class="font-mono text-xs text-text-faint"
+        >{posts.length} post{posts.length === 1 ? '' : 's'}</span
+      >
+      <a
+        class="font-mono text-xs text-text-faint no-underline hover:text-accent"
+        href="/rss.xml">rss</a
+      >
+    </div>
+
+    <div class="mt-2">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+  </section>
+</BaseLayout>
