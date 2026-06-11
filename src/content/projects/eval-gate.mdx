@@ -1,0 +1,30 @@
+---
+slug: eval-gate
+title: eval-gate
+tagline: >-
+  Regression-eval CI gate — embedding-free scorers, drift detection with a
+  k-repeat noise floor, and a sticky PR comment via a GitHub Action. Dogfooded
+  by every other repo here.
+repo: https://github.com/slatino-dev/eval-gate
+language: Python + TypeScript
+status: active
+order: 6
+summary: >-
+  A CI gate that fails builds on eval regressions instead of vibes. Golden
+  sets are JSONL; scorers are embedding-free (exact, regex, json_subset,
+  numeric_tolerance, token-F1 text similarity, optional judge). Drift
+  detection uses a k-repeat noise floor: the candidate mean is compared
+  against the baseline's confidence interval, not its point estimate, so
+  ordinary run-to-run variance doesn't page anyone. A TypeScript GitHub
+  Action posts a sticky PR comment and enforces fail-the-build thresholds.
+  When no judge endpoint is configured, the judge scorer degrades to a
+  visible "skipped (no endpoint)" rather than silently passing. Dogfooded by
+  the other five projects.
+topics:
+  - evals
+  - CI
+  - drift detection
+  - GitHub Actions
+  - regression testing
+tests: 112
+---

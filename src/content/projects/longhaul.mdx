@@ -1,0 +1,30 @@
+---
+slug: longhaul
+title: longhaul
+tagline: >-
+  Early-adopter MCP 2026-07-28 release-candidate server in Rust — stateless
+  core, the Tasks extension, and statelessness proven by round-robining one
+  client across two server instances.
+repo: https://github.com/slatino-dev/longhaul
+language: Rust
+status: active
+order: 2
+summary: >-
+  An implementation of the MCP 2026-07-28 release candidate, built while the
+  spec is still wet: stateless core (per-request _meta clientInfo,
+  MCP-Protocol-Version / Mcp-Method / Mcp-Name headers, server/discover in
+  place of the removed initialize handshake), the Tasks extension (tools/call
+  returns a task handle driven by tasks/get, tasks/update, tasks/cancel),
+  InputRequired multi-round-trip, JSON Schema 2020-12 tool schemas. axum
+  server, a TaskStore trait with memory and SQLite backends, Mcp-Method
+  routing middleware, a real long-running indexer example, and a conformance
+  runner. The signature test round-robins one client's task lifecycle across
+  two server instances that share only SQLite.
+topics:
+  - MCP
+  - protocol implementation
+  - stateless servers
+  - axum
+  - conformance testing
+tests: 67
+---

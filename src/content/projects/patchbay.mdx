@@ -1,0 +1,30 @@
+---
+slug: patchbay
+title: patchbay
+tagline: >-
+  Single-binary OpenAI-compatible gateway where privacy routing is enforced
+  in the type system — a private request cannot select an external backend,
+  by construction.
+repo: https://github.com/slatino-dev/patchbay
+language: Rust
+status: active
+order: 3
+summary: >-
+  A single-binary OpenAI-compatible gateway. The centerpiece is tag-based
+  privacy routing enforced in the type system: a request tagged private
+  cannot select an External backend — the compiler guarantees it, and an
+  exhaustive proptest backs the guarantee. Around that core: EWMA
+  latency-aware routing with static priority, fallback chains with jittered
+  retries before first byte, byte-faithful SSE relay with final-usage
+  interception, virtual keys, per-key token budgets, RPM/TPM rate limits,
+  Prometheus metrics, and a criterion bench of the route path. A head-to-head
+  overhead comparison against LiteLLM on the same host is planned but not yet
+  run.
+topics:
+  - LLM gateway
+  - type-driven design
+  - privacy routing
+  - SSE streaming
+  - self-hosted inference
+tests: 13
+---

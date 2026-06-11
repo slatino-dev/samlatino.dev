@@ -1,0 +1,31 @@
+---
+slug: millstone
+title: millstone
+tagline: >-
+  Clean-room BM25 + tree-sitter repo-map retrieval crate, with a bench
+  harness against tantivy and SQLite FTS5 — the "you probably don't need
+  embeddings (yet)" thesis.
+repo: https://github.com/slatino-dev/millstone
+language: Rust
+status: active
+order: 4
+summary: >-
+  A clean-room lexical retrieval crate built to test the thesis that most
+  code-retrieval workloads don't need embeddings yet. Okapi BM25 hand-verified
+  against computed values, a code-aware tokenizer (camelCase, snake_case,
+  unicode), and a tree-sitter repo-map with a symbol table and cross-file
+  references. The bench harness runs Millstone, tantivy, and SQLite-FTS5
+  retrievers over SciFact and SWE-bench-lite file-localization corpora
+  (fetched by xtask with checksums, never committed), scoring nDCG@10, MRR,
+  and Recall@k with metrics unit-tested against known values and a
+  Kendall-tau validity check versus tantivy. The fastembed+HNSW vector
+  baseline is a documented placeholder deferred to bench time. Results
+  pending real runs.
+topics:
+  - BM25
+  - lexical retrieval
+  - tree-sitter
+  - repo-map
+  - benchmarking
+tests: 35
+---

@@ -1,0 +1,30 @@
+---
+slug: redcell
+title: redcell
+tagline: >-
+  Defensive agent-robustness harness mapped to the OWASP Top 10 for Agentic
+  Applications — deterministic oracles, a 146-case probe corpus, and a
+  sandboxed three-level target.
+repo: https://github.com/slatino-dev/redcell
+language: Python
+status: active
+order: 1
+summary: >-
+  A test harness for measuring how well an agent resists prompt injection,
+  data exfiltration, and tool misuse — mapped to the OWASP Top 10 for Agentic
+  Applications (2026). Scoring is done by deterministic oracles
+  (canary-exfiltration detection including base64/hex/partial leaks,
+  forbidden-tool-invocation, regex/JSON-path predicates), not vibes. Ships an
+  in-repo sandboxed target with three hardening levels and a rig-correctness
+  suite that proves the harness itself scores scripted vulnerable and safe
+  agents correctly. On the same 146-probe corpus, hardening none → basic →
+  hardened took attack success rate from 73% to 3% to 0%. Authorized testing
+  only.
+topics:
+  - agent security
+  - OWASP agentic top 10
+  - prompt injection
+  - deterministic oracles
+  - evals
+tests: 132
+---

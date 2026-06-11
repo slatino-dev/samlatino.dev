@@ -1,0 +1,31 @@
+---
+slug: callcheck
+title: callcheck
+tagline: >-
+  Tool-calling and structured-output conformance matrix for vLLM-served open
+  models, with an 11-label failure taxonomy and a mock server that proves the
+  scorer itself is correct.
+repo: https://github.com/slatino-dev/callcheck
+language: Python
+status: active
+order: 5
+summary: >-
+  A conformance matrix for tool calling and structured output on vLLM-served
+  open models. Tasks are YAML; checkers run parse → jsonschema validate →
+  semantic predicates; failures land in an 11-label taxonomy (no_call,
+  wrong_tool, malformed_json, schema_violation, hallucinated_param,
+  missing_required, type_coercion, escaping_error, truncation,
+  parallel_collapse, spurious_call). Around 40–50 task definitions cover
+  single, parallel, nested, enum, unicode, int64, and $ref edge cases. The
+  runner is resumable per matrix cell at k=3; reports include tables and a
+  failure-transcript gallery. An in-repo mock server returns both well-formed
+  and malformed tool calls so CI proves the scorer scores correctly. Matrix
+  results pending real runs.
+topics:
+  - tool calling
+  - structured output
+  - vLLM
+  - conformance testing
+  - failure taxonomy
+tests: 165
+---
