@@ -1,0 +1,228 @@
+---
+/**
+ * /resume/ — renders src/data/resume.json as HTML. Zero drift from the PDF:
+ * the same JSON object drives both. Download link points at /resume.pdf.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import resumeData from '../data/resume.json';
+
+const { contact, summary, skills, experience, projects, education } = resumeData;
+
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '';
+  if (iso === 'present') return 'Present';
+  // YYYY
+  if (/^\d{4}$/.test(iso)) return iso;
+  // YYYY-MM
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const parts = iso.split('-');
+  const y = parts[0] ?? '';
+  const m = parts[1] ?? '01';
+  return `${months[parseInt(m, 10) - 1] ?? ''} ${y}`.trim();
+}
+
+function fmtRange(start?: string | null, end?: string | null): string {
+  const parts: string[] = [];
+  if (start) parts.push(fmtDate(start));
+  if (end) parts.push(fmtDate(end));
+  return parts.join(' - ');
+}
+---
+
+<BaseLayout
+  title="resume — Sam Latino"
+  description="Sam Latino — AI Engineer. Rust, Python, agent systems, evals, self-hosted LLM infrastructure. Full resume with experience and open-source projects."
+>
+  <article class="mx-auto max-w-3xl px-5 pt-12 pb-16 md:pt-16">
+
+    <!-- Terminal prompt header -->
+    <p class="prompt m-0 text-xs">
+      <span class="prompt-user">sam@latino</span><span class="prompt-sep">:</span><span
+        class="prompt-path">~</span><span class="prompt-sigil">$</span>
+      <span class="text-text-muted">cat resume.json | render</span>
+    </p>
+
+    <!-- Download banner -->
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-4 border border-border rounded-[4px] bg-surface px-4 py-3">
+      <span class="font-mono text-xs text-text-muted">
+        ATS-safe PDF &mdash; built from the same JSON as this page
+      </span>
+      <a
+        href="/resume.pdf"
+        download="Samuel_Latino_Resume.pdf"
+        class="font-mono text-xs text-accent no-underline hover:text-accent-dim"
+      >
+        download resume.pdf &darr;
+      </a>
+    </div>
+
+    <!-- ── Contact ── -->
+    <header class="mt-8 border-b border-border pb-5">
+      <h1 class="m-0 text-2xl font-semibold md:text-3xl">{contact.name}</h1>
+      <p class="mt-2 mb-0 font-mono text-[0.8125rem] text-text-muted">
+        AI Engineer
+      </p>
+      <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-text-faint">
+        {contact.email && (
+          <a href={`mailto:${contact.email}`} class="no-underline hover:text-accent">
+            {contact.email}
+          </a>
+        )}
+        {contact.phone && <span>{contact.phone}</span>}
+        {contact.location && <span>{contact.location}</span>}
+        {contact.github && (
+          <a
+            href={`https://${contact.github}`}
+            class="no-underline hover:text-accent"
+            rel="noopener noreferrer"
+          >
+            {contact.github}
+          </a>
+        )}
+        {contact.portfolio && (
+          <a
+            href={`https://${contact.portfolio}`}
+            class="no-underline hover:text-accent"
+            rel="noopener noreferrer"
+          >
+            {contact.portfolio}
+          </a>
+        )}
+        {contact.linkedin && (
+          <a
+            href={`https://${contact.linkedin}`}
+            class="no-underline hover:text-accent"
+            rel="noopener noreferrer"
+          >
+            {contact.linkedin}
+          </a>
+        )}
+      </div>
+    </header>
+
+    <!-- ── Summary ── -->
+    {summary && (
+      <section class="mt-7" aria-labelledby="sec-summary">
+        <h2 id="sec-summary" class="resume-heading">Summary</h2>
+        <p class="mt-3 mb-0 leading-relaxed text-text-muted">{summary}</p>
+      </section>
+    )}
+
+    <!-- ── Skills ── -->
+    {skills?.length > 0 && (
+      <section class="mt-7" aria-labelledby="sec-skills">
+        <h2 id="sec-skills" class="resume-heading">Skills</h2>
+        <dl class="mt-3 grid grid-cols-1 gap-y-1.5 sm:grid-cols-[auto_1fr] sm:gap-x-6 font-mono text-[0.8125rem]">
+          {skills.map((group) => (
+            <>
+              <dt class="text-text-faint whitespace-nowrap">{group.group}</dt>
+              <dd class="m-0 text-text-muted">{group.items.join(', ')}</dd>
+            </>
+          ))}
+        </dl>
+      </section>
+    )}
+
+    <!-- ── Experience ── -->
+    {experience?.length > 0 && (
+      <section class="mt-7" aria-labelledby="sec-experience">
+        <h2 id="sec-experience" class="resume-heading">Experience</h2>
+        <div class="mt-3 space-y-5">
+          {experience.map((role) => (
+            <div>
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                <span class="font-semibold font-mono text-[0.9375rem]">{role.title}, {role.company}</span>
+                <span class="font-mono text-xs text-text-faint whitespace-nowrap">
+                  {role.location && `${role.location} · `}{fmtRange(role.start, role.end)}
+                </span>
+              </div>
+              <ul class="mt-2 mb-0 space-y-1 pl-4 list-none">
+                {role.bullets.map((b) => (
+                  <li class="relative text-[0.9rem] text-text-muted leading-relaxed before:absolute before:-left-4 before:top-[0.6em] before:content-['•'] before:text-text-faint">
+                    {b.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- ── Projects ── -->
+    {projects?.length > 0 && (
+      <section class="mt-7" aria-labelledby="sec-projects">
+        <h2 id="sec-projects" class="resume-heading">Open-Source Projects</h2>
+        <div class="mt-3 space-y-4">
+          {projects.map((proj) => (
+            <div>
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                {proj.link ? (
+                  <a
+                    href={`https://${proj.link}`}
+                    class="font-semibold font-mono text-[0.9375rem] no-underline hover:text-accent"
+                    rel="noopener noreferrer"
+                  >
+                    {proj.name}
+                  </a>
+                ) : (
+                  <span class="font-semibold font-mono text-[0.9375rem]">{proj.name}</span>
+                )}
+                <span class="font-mono text-xs text-text-faint">
+                  {proj.stack.join(', ')}
+                  {(proj.start || proj.end) && (
+                    <> &middot; {fmtRange(proj.start ?? undefined, proj.end ?? undefined)}</>
+                  )}
+                </span>
+              </div>
+              <ul class="mt-1.5 mb-0 space-y-1 pl-4 list-none">
+                {proj.bullets.map((b) => (
+                  <li class="relative text-[0.9rem] text-text-muted leading-relaxed before:absolute before:-left-4 before:top-[0.6em] before:content-['•'] before:text-text-faint">
+                    {b.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- ── Education ── -->
+    {education?.length > 0 && (
+      <section class="mt-7" aria-labelledby="sec-education">
+        <h2 id="sec-education" class="resume-heading">Education</h2>
+        <div class="mt-3 space-y-3">
+          {education.map((entry) => (
+            <div>
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                <span class="font-semibold font-mono text-[0.9375rem]">{entry.institution}</span>
+                <span class="font-mono text-xs text-text-faint">
+                  {entry.location && `${entry.location} · `}{fmtRange(entry.start ?? undefined, entry.end ?? undefined)}
+                </span>
+              </div>
+              <p class="mt-0.5 mb-0 text-[0.9rem] text-text-muted">
+                {entry.credential}{entry.details && ` · ${entry.details}`}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+  </article>
+</BaseLayout>
+
+<style>
+  .resume-heading {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.35rem;
+  }
+</style>
