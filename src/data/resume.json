@@ -94,7 +94,7 @@
   "projects": [
     {
       "name": "redcell",
-      "stack": ["Rust", "Python"],
+      "stack": ["Python"],
       "link": "github.com/slatino-dev/redcell",
       "start": "2026-01",
       "end": "present",
@@ -103,7 +103,7 @@
           "text": "Agent robustness tester mapping to the OWASP Top 10 for Agentic Applications, with 146 deterministic probe cases and an in-repo sandboxed target at three hardening levels",
           "source": "candidate-profile/projects/prj-hambone.md",
           "confidence": "high",
-          "keywords": ["agent security", "OWASP", "red teaming", "Rust"]
+          "keywords": ["agent security", "OWASP", "red teaming", "Python"]
         }
       ]
     },
@@ -145,7 +145,7 @@
       "end": "present",
       "bullets": [
         {
-          "text": "Clean-room BM25 plus tree-sitter repo-map retrieval crate; benchmarks on code corpora establish where lexical retrieval crosses over against vector recall",
+          "text": "Clean-room BM25 plus tree-sitter repo-map retrieval crate with a bench harness against tantivy and SQLite FTS5 to locate the lexical-versus-vector crossover on code corpora",
           "source": "candidate-profile/projects/prj-hambone.md",
           "confidence": "high",
           "keywords": ["BM25", "FTS5", "retrieval", "tree-sitter", "Rust"]

@@ -12,6 +12,9 @@ const posts = (await getCollection('writing'))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
   .slice(0, 3);
 
+// Summed from each project's own suite — never hand-maintained.
+const totalTests = projects.reduce((sum, p) => sum + (p.data.tests ?? 0), 0);
+
 // Bento spans for the home grid, keyed by slug. Anything new defaults to
 // a half-width card until it earns a slot.
 const spans: Record<string, string> = {
@@ -44,9 +47,9 @@ const contact = [
       Rust&nbsp;+&nbsp;Python.<span class="cursor" aria-hidden="true"></span>
     </h1>
     <p class="mt-8 mb-0 font-mono text-[0.8125rem] text-text-muted">
-      6 open-source projects
+      {projects.length} open-source projects
       <span class="text-text-faint">&nbsp;&middot;&nbsp;</span>
-      ~620 tests
+      {totalTests} tests
       <span class="text-text-faint">&nbsp;&middot;&nbsp;</span>
       Rust
       <span class="text-text-faint">&middot;</span>

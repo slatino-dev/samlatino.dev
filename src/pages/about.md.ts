@@ -12,8 +12,8 @@ AI engineer building production agent systems, evals, and self-hosted LLM infras
 ## Background
 
 - B.S. Biological Engineering, Louisiana State University (2016–2020)
-- Several years in enterprise software sales before moving full-time into engineering
-- Building production AI/LLM systems since 2023
+- Came to engineering by way of enterprise software sales (ADP, Vensure)
+- Prior project work: a 6-agent LangGraph execution platform and a Playwright + FastAPI CRM automation layer
 - Self-hosted GPU inference: Qwen models served via vLLM
 
 ## What I build

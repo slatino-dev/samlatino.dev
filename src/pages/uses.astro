@@ -34,7 +34,7 @@ const stack = [
     items: [
       { name: 'axum + tokio', note: 'HTTP servers; async runtime' },
       { name: 'rusqlite', note: 'SQLite, including FTS5 virtual tables' },
-      { name: 'criterion', note: 'micro-benchmarks; the source of every number in the bench tables' },
+      { name: 'criterion', note: 'micro-benchmarks; the patchbay route path runs under it' },
       { name: 'insta', note: 'snapshot tests; catches regressions in rendered output' },
       { name: 'serde / serde_json', note: 'everywhere' },
     ],
@@ -113,8 +113,8 @@ const stack = [
         both change if you can assume the model is local, and I'd rather build
         to that assumption than paper over the seams. The tradeoffs show up in
         <a href="/projects/patchbay/">patchbay</a>'s privacy-routing design
-        and in the inference-policy decisions documented in
-        <a href="/projects/millstone/">millstone</a>.
+        and in <a href="/projects/millstone/">millstone</a>'s case against an
+        embedding dependency in the indexing path.
       </p>
     </div>
   </article>
