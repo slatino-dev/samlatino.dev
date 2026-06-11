@@ -44,6 +44,12 @@ const elsewhere = [
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="samlatino.dev" />
+    <meta name="twitter:card" content="summary" />
     <meta name="theme-color" content="#0a0d0b" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
@@ -86,6 +92,16 @@ const elsewhere = [
       >
         <span>&copy; 2026 Sam Latino</span>
         <span class="hidden sm:inline">built with zero client JS</span>
+        <nav aria-label="More pages">
+          <ul class="m-0 flex list-none gap-x-5 p-0">
+            <li>
+              <a class="text-text-faint no-underline hover:text-accent" href="/now/">now</a>
+            </li>
+            <li>
+              <a class="text-text-faint no-underline hover:text-accent" href="/uses/">uses</a>
+            </li>
+          </ul>
+        </nav>
         <nav aria-label="Elsewhere" class="ms-auto">
           <ul class="m-0 flex list-none gap-x-5 p-0">
             {

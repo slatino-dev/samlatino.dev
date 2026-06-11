@@ -72,6 +72,7 @@ export async function GET(_ctx: APIContext) {
   lines.push('## Meta');
   lines.push('');
   lines.push('- [about](https://samlatino.dev/about.md): Sam Latino — background, education, contact.');
+  lines.push('- [resume](https://samlatino.dev/resume/): Full resume; ATS-safe PDF at https://samlatino.dev/resume.pdf');
   lines.push('- [uses](https://samlatino.dev/uses/): Stack, tooling, hardware.');
   lines.push('- [now](https://samlatino.dev/now/): Current focus (updated 2026-06).');
   lines.push('- [RSS feed](https://samlatino.dev/rss.xml): Writing feed.');
