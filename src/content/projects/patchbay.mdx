@@ -28,3 +28,142 @@ topics:
   - self-hosted inference
 tests: 13
 ---
+
+**A gateway touches every token you stream, so it has exactly two jobs — add almost nothing, and never send a private prompt to someone else's computer; patchbay does the second one at compile time.**
+
+<StatGrid cols={4}>
+  <Metric label="deployment" value="1" detail="single binary" />
+  <Metric label="private→external routes" value="0" detail="unrepresentable in the types" />
+  <Metric label="retry window" value="pre-byte" detail="never after first byte" />
+  <Metric label="overhead vs LiteLLM" value="unmeasured" detail="head-to-head planned, same host" />
+</StatGrid>
+
+## the zero is structural
+
+Requests are tagged at ingress, and the tag is a type parameter, not a field.
+Routing a private request to an external backend is therefore not a guarded
+error path — it is a program that does not compile. Shape of the idea,
+simplified:
+
+```rust
+// simplified sketch — the real types carry more context
+struct Private;
+struct Shareable;
+
+struct Request<Tag> { /* payload, key, budget … */ }
+
+impl Request<Private> {
+    // the only route() that exists for Private takes local backends
+    fn route(self, pool: &LocalPool) -> Routed { /* … */ }
+}
+
+impl Request<Shareable> {
+    fn route(self, pool: &AnyPool) -> Routed { /* … */ }
+}
+```
+
+The boundary where tags get assigned — config parsing, header mapping — is
+runtime code and stays dangerous, so an exhaustive proptest hammers exactly
+that border: across generated request/backend combinations, a private request
+never resolves to an external backend. Types carry the guarantee; the proptest
+guards the crossing where untyped input becomes typed.
+
+<DecisionNote title="privacy in the type system over a runtime check">
+
+A runtime check is a test of the cases someone thought to write, and it rots:
+every new fallback branch, retry path, and routing policy is a fresh place to
+forget it. Moving the tag into a type parameter settles the question once, at
+design level — a fallback chain cannot fail open, because an external
+candidate for a private request is not an expressible value.
+
+The trade is developer friction. Type-state Rust reads harder, generics leak
+into signatures, and the ingress boundary still needs property testing because
+the outside world arrives untyped. Worth it here: this is the one invariant
+whose violation is unrecoverable.
+
+</DecisionNote>
+
+## route path
+
+<ArchDiagram path="docs/route-path.svg" caption="ingress → keys/budgets → governor → router; private traffic can only resolve to the local pool">
+  <svg viewBox="0 0 600 320" width="600" height="320" role="presentation">
+    <defs>
+      <marker id="pb-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow" d="M0 0L8 4L0 8z" />
+      </marker>
+      <marker id="pb-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-accent" d="M0 0L8 4L0 8z" />
+      </marker>
+    </defs>
+    <rect class="box" x="10" y="40" width="90" height="56" rx="3" />
+    <text class="lbl" x="55" y="64" text-anchor="middle">client</text>
+    <text class="sub" x="55" y="82" text-anchor="middle">OpenAI API</text>
+    <rect class="box" x="140" y="40" width="130" height="56" rx="3" />
+    <text class="lbl" x="205" y="64" text-anchor="middle">virtual keys</text>
+    <text class="sub" x="205" y="82" text-anchor="middle">per-key token budgets</text>
+    <rect class="box" x="310" y="40" width="120" height="56" rx="3" />
+    <text class="lbl" x="370" y="64" text-anchor="middle">governor</text>
+    <text class="sub" x="370" y="82" text-anchor="middle">RPM · TPM</text>
+    <rect class="box box-accent" x="470" y="28" width="120" height="80" rx="3" />
+    <text class="lbl" x="530" y="52" text-anchor="middle">router</text>
+    <text class="sub" x="530" y="70" text-anchor="middle">privacy tag</text>
+    <text class="sub" x="530" y="84" text-anchor="middle">EWMA + priority</text>
+    <text class="sub" x="530" y="98" text-anchor="middle">fallback chains</text>
+    <rect class="box box-ghost" x="310" y="140" width="120" height="44" rx="3" />
+    <text class="lbl" x="370" y="158" text-anchor="middle">/metrics</text>
+    <text class="sub" x="370" y="174" text-anchor="middle">Prometheus</text>
+    <rect class="box box-accent" x="350" y="190" width="240" height="56" rx="3" />
+    <text class="lbl" x="470" y="212" text-anchor="middle">local backends</text>
+    <text class="sub" x="470" y="230" text-anchor="middle">private + public · self-hosted</text>
+    <rect class="box" x="60" y="190" width="240" height="56" rx="3" />
+    <text class="lbl" x="180" y="212" text-anchor="middle">external backends</text>
+    <text class="sub" x="180" y="230" text-anchor="middle">public traffic only</text>
+    <line class="edge edge-accent" x1="100" y1="68" x2="136" y2="68" marker-end="url(#pb-g)" />
+    <line class="edge edge-accent" x1="270" y1="68" x2="306" y2="68" marker-end="url(#pb-g)" />
+    <line class="edge edge-accent" x1="430" y1="68" x2="466" y2="68" marker-end="url(#pb-g)" />
+    <line class="edge edge-accent" x1="530" y1="108" x2="530" y2="186" marker-end="url(#pb-g)" />
+    <polyline class="edge" points="490,108 490,128 180,128 180,186" marker-end="url(#pb-a)" />
+    <text class="note" x="300" y="122" text-anchor="middle">public only</text>
+    <line class="edge edge-dashed" x1="370" y1="96" x2="370" y2="136" />
+    <text class="note" x="180" y="266" text-anchor="middle">Request⟨Private⟩ → External: does not typecheck</text>
+    <text class="note" x="300" y="300" text-anchor="middle">responses return over a byte-faithful SSE relay; the final usage frame is intercepted for accounting</text>
+  </svg>
+</ArchDiagram>
+
+Backend selection blends an EWMA of observed per-backend latency with static
+priority, so a slow backend drains traffic without a config push and a
+recovered one earns it back. Fallback chains retry with jittered backoff under
+one hard rule: retries fire only before the first response byte. After first
+byte, a retry would splice duplicate output into a stream a client is already
+consuming — so past that point, failures surface instead of retrying.
+
+The SSE relay is byte-faithful. Upstream bytes pass through untouched, with
+one exception: the final usage frame is intercepted to feed accounting. That
+is the entire parse surface of the streaming path.
+
+## operations
+
+Virtual keys with per-key token budgets, governor-enforced RPM/TPM limits,
+and a Prometheus `/metrics` endpoint. The route path has a criterion bench in
+the repo — so when the LiteLLM comparison runs, the harness is already
+waiting. 13 tests, `clippy -D warnings` clean; the proptest does the heavy
+lifting on the invariant that matters.
+
+## numbers, including the missing one
+
+<BenchTable
+  path="bench/overhead-vs-litellm"
+  emptyNote="Planned and not yet run: patchbay vs LiteLLM on the same host against the same backend — added latency p50/p99 on the route path, plus time-to-first-byte under streaming. The criterion bench of the route path exists; the cross-gateway numbers appear here when the run happens, not before."
+/>
+
+<DeadEnd title="parsing the stream I should have relayed">
+
+The first SSE implementation parsed every event into structs and re-serialized
+on the way out. It worked until it met real backends: re-serialization shifted
+byte layout — field order, whitespace, chunk boundaries — in ways some clients
+noticed, and tracking upstream format drift became a permanent chore. The
+rewrite treats the stream as opaque bytes and parses exactly one thing, the
+final usage frame. I would start there next time: relay bytes until a specific
+feature forces a parse, then parse the minimum.
+
+</DeadEnd>

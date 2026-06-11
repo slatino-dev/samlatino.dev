@@ -28,3 +28,160 @@ topics:
   - evals
 tests: 132
 ---
+
+**An agent that passes a manual red-team review on Tuesday can leak its system prompt on Wednesday — redcell turns "resists prompt injection" into a number you can regress against.**
+
+redcell is a defensive test harness. It runs a fixed corpus of attack probes
+against an agent, scores every transcript with deterministic oracles, and
+reports attack success rate and severity-weighted risk per hardening level.
+Nothing in the scoring path depends on one model's opinion of another model's
+output.
+
+## scope
+
+- **Corpus:** 146 probe cases mapped to the OWASP Top 10 for Agentic
+  Applications (2026), covering five categories: ASI01, ASI02, ASI03, ASI05,
+  ASI06.
+- **Target:** an in-repo, sandboxed agent with three hardening levels —
+  `none`, `basic`, `hardened`. The harness ships the thing it attacks, so
+  every number below reproduces from a clone.
+- **Rules of engagement:** authorized testing only. redcell measures defenses
+  you own. It is not an attack kit, and the corpus assumes a target you are
+  permitted to break.
+
+## method
+
+<ArchDiagram path="docs/architecture.svg" caption="probe corpus → runner → sandboxed target → deterministic oracles → report; the optional judge path degrades to needs-review">
+  <svg viewBox="0 0 600 352" width="600" height="352" role="presentation">
+    <defs>
+      <marker id="rc-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow" d="M0 0L8 4L0 8z" />
+      </marker>
+      <marker id="rc-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-accent" d="M0 0L8 4L0 8z" />
+      </marker>
+    </defs>
+    <rect class="box" x="10" y="40" width="150" height="60" rx="3" />
+    <text class="lbl" x="85" y="66" text-anchor="middle">probe corpus</text>
+    <text class="sub" x="85" y="84" text-anchor="middle">146 cases · ASI01–06</text>
+    <rect class="box" x="205" y="40" width="100" height="60" rx="3" />
+    <text class="lbl" x="255" y="75" text-anchor="middle">runner</text>
+    <rect class="box" x="350" y="34" width="240" height="72" rx="3" />
+    <text class="lbl" x="470" y="58" text-anchor="middle">sandboxed target</text>
+    <text class="sub" x="470" y="76" text-anchor="middle">in-repo agent, 3 hardening levels</text>
+    <text class="sub" x="470" y="92" text-anchor="middle">none · basic · hardened</text>
+    <rect class="box box-accent" x="100" y="170" width="250" height="92" rx="3" />
+    <text class="lbl" x="225" y="192" text-anchor="middle">deterministic oracles</text>
+    <text class="sub" x="225" y="212" text-anchor="middle">canary exfil — raw · b64 · hex · partial</text>
+    <text class="sub" x="225" y="228" text-anchor="middle">forbidden-tool invocation</text>
+    <text class="sub" x="225" y="244" text-anchor="middle">regex / JSON-path predicates</text>
+    <rect class="box" x="420" y="186" width="170" height="60" rx="3" />
+    <text class="lbl" x="505" y="210" text-anchor="middle">report</text>
+    <text class="sub" x="505" y="228" text-anchor="middle">ASR · severity-weighted risk</text>
+    <rect class="box box-ghost" x="100" y="296" width="250" height="48" rx="3" />
+    <text class="lbl" x="225" y="316" text-anchor="middle">local judge — optional</text>
+    <text class="sub" x="225" y="333" text-anchor="middle">no endpoint → needs-review</text>
+    <line class="edge edge-accent" x1="160" y1="70" x2="201" y2="70" marker-end="url(#rc-g)" />
+    <line class="edge edge-accent" x1="305" y1="70" x2="346" y2="70" marker-end="url(#rc-g)" />
+    <polyline class="edge edge-accent" points="470,106 470,140 225,140 225,166" marker-end="url(#rc-g)" />
+    <text class="note" x="350" y="133" text-anchor="middle">transcripts</text>
+    <line class="edge edge-accent" x1="350" y1="216" x2="416" y2="216" marker-end="url(#rc-g)" />
+    <polyline class="edge edge-dashed" points="225,140 40,140 40,320 96,320" marker-end="url(#rc-a)" />
+  </svg>
+</ArchDiagram>
+
+Each probe is a scripted interaction with an injection payload and a known
+ground truth. The runner drives it against the target, captures the full
+transcript, and hands it to three oracle families:
+
+- **Canary exfiltration.** Secrets are seeded into the target's context as
+  canaries. The oracle flags a leak whether it surfaces raw, base64-encoded,
+  hex-encoded, or as a recognizable partial fragment.
+- **Forbidden-tool invocation.** Any call to a tool the case's policy forbids
+  is a finding, regardless of how politely the model narrated it.
+- **Regex / JSON-path predicates.** Case-specific assertions over the
+  transcript structure for everything the first two don't cover.
+
+An optional local-model judge can annotate transcripts the oracles cannot
+classify. When no endpoint is configured, judge-dependent cases degrade to
+`needs-review` — a visible state in the report, never a silent pass.
+
+<DecisionNote title="deterministic oracles over an LLM judge">
+
+The first scorer design was a judge, and judges are persuasive — they catch
+phrasings a regex misses. They are also unrepeatable: the same transcript can
+score differently across runs, which is fatal when the whole exercise is
+comparing hardening levels on one fixed axis. The oracles are stricter and
+duller. A canary either appears in the output — raw, base64, hex, or as a
+fragment — or it does not. A forbidden tool was invoked or it was not. Dull is
+the feature: verdicts survive re-runs, bisects, and arguments.
+
+The judge survives as optional triage on the margins, and it is never allowed
+to overturn a deterministic verdict.
+
+</DecisionNote>
+
+## findings
+
+The flagship run sweeps the same 146-probe corpus across all three hardening
+levels of the in-repo target. These numbers are harness-produced, not
+estimated:
+
+<BenchTable
+  path="runs/hardening-sweep"
+  caption="same corpus, same oracles, three target configurations"
+  provenance="harness-produced: redcell runner over the 146-case corpus against the in-repo sandboxed target; deterministic oracles only, no judge in the loop"
+  columns={[
+    { key: 'level', label: 'hardening level' },
+    { key: 'asr', label: 'attack success rate', numeric: true },
+    { key: 'risk', label: 'severity-weighted risk', numeric: true },
+  ]}
+  rows={[
+    {
+      level: 'none',
+      asr: { value: '73%', delta: 'bad' },
+      risk: { value: '84.3', delta: 'bad' },
+    },
+    { level: 'basic', asr: '3%', risk: '2.4' },
+    {
+      level: 'hardened',
+      asr: { value: '0%', delta: 'good' },
+      risk: { value: '0.0', delta: 'good' },
+    },
+  ]}
+/>
+
+Read it honestly. The target is the in-repo sandbox, not your production
+agent, and 0% against this corpus does not mean safe — it means this corpus is
+exhausted. The result that matters is the slope: identical probes, identical
+oracles, three configurations, and a measurable answer to "did the mitigation
+move anything." Re-run the sweep after a prompt change and you know whether
+you regressed, in minutes, without convening a review.
+
+## scoring integrity
+
+A harness that mis-scores is worse than no harness — it converts vulnerability
+into confidence. So the rig itself is under test: scripted fake agents with
+known ground truth, one deliberately vulnerable and one deliberately safe, run
+through the full pipeline, and the suite asserts the scores land exactly where
+they must. The 132 tests cover the oracles, the sandbox, and that
+rig-correctness loop.
+
+<StatGrid cols={4}>
+  <Metric label="probes" value="146" detail="OWASP agentic, 5 categories" />
+  <Metric label="hardening levels" value="3" detail="none · basic · hardened" />
+  <Metric label="oracle families" value="3" detail="all deterministic" />
+  <Metric label="tests" value="132" detail="incl. rig-correctness" />
+</StatGrid>
+
+<DeadEnd title="trusting the rig before testing the rig">
+
+Early versions tuned probes against the live target and took the scores at
+face value. Then a canary detector turned out to miss hex-encoded leaks — for
+a while, an exfiltration was being scored as a pass. The scripted
+vulnerable-and-safe agents were built in response to that false negative, and
+they should have existed first: the rig-correctness suite is the only thing in
+the repo that can catch the harness lying. Rebuilt from scratch, it would be
+commit one.
+
+</DeadEnd>
