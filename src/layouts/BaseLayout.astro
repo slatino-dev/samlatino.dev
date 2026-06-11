@@ -1,0 +1,98 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Sam Latino — AI engineer. Agent systems, evals, and self-hosted LLM infrastructure.',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
+const nav = [
+  { href: '/projects/', label: 'projects' },
+  { href: '/writing/', label: 'writing' },
+  { href: '/about/', label: 'about' },
+];
+
+// sameAs placeholders — swap in real profile URLs before launch.
+const elsewhere = [
+  { href: 'https://github.com/samlatino', label: 'github' },
+  { href: 'https://www.linkedin.com/in/samlatino', label: 'linkedin' },
+  { href: 'mailto:hello@samlatino.dev', label: 'email' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0a0d0b" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+  <body class="flex min-h-dvh flex-col">
+    <a class="skip-link" href="#main">skip to content</a>
+
+    <header class="border-b border-border">
+      <div
+        class="mx-auto flex max-w-5xl flex-wrap items-baseline gap-x-8 gap-y-2 px-5 py-3"
+      >
+        <a href="/" class="prompt text-sm no-underline hover:no-underline">
+          <span class="prompt-user">sam@latino</span><span class="prompt-sep"
+            >:</span
+          ><span class="prompt-path">~</span><span class="prompt-sigil">$</span>
+        </a>
+        <nav aria-label="Primary">
+          <ul class="m-0 flex list-none gap-x-6 p-0 text-sm">
+            {
+              nav.map((item) => (
+                <li>
+                  <a class="nav-link" href={item.href}>{item.label}</a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="mt-16 border-t border-border">
+      <div
+        class="mx-auto flex max-w-5xl flex-wrap items-baseline gap-x-8 gap-y-2 px-5 py-6 font-mono text-xs text-text-faint"
+      >
+        <span>&copy; 2026 Sam Latino</span>
+        <span class="hidden sm:inline">built with zero client JS</span>
+        <nav aria-label="Elsewhere" class="ms-auto">
+          <ul class="m-0 flex list-none gap-x-5 p-0">
+            {
+              elsewhere.map((link) => (
+                <li>
+                  <a
+                    rel="me"
+                    class="text-text-faint no-underline hover:text-accent"
+                    href={link.href}>{link.label}</a
+                  >
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
