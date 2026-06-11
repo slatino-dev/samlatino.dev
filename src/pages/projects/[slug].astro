@@ -1,0 +1,21 @@
+---
+/**
+ * /projects/<slug>/ — one statically generated case study per `projects`
+ * collection entry, rendered by CaseStudyLayout. The slug comes from
+ * frontmatter (not the filename) so entries can move on disk freely.
+ */
+import { getCollection } from 'astro:content';
+import CaseStudyLayout from '../../layouts/CaseStudyLayout.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((entry) => ({
+    params: { slug: entry.data.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+---
+
+<CaseStudyLayout entry={entry} />

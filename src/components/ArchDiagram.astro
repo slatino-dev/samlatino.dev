@@ -39,6 +39,69 @@ const { path = 'docs/architecture.svg', caption } = Astro.props;
     font-family: var(--font-mono);
   }
 
+  /* Shared diagram vocabulary. The case-study SVGs are hand-authored inline
+     and use these classes, so every diagram draws from the same hairline +
+     single-accent palette as the rest of the site. */
+  .diagram :global(.box) {
+    fill: var(--color-surface-2);
+    stroke: var(--color-border-strong);
+    stroke-width: 1;
+  }
+
+  .diagram :global(.box-accent) {
+    stroke: var(--color-accent-dim);
+  }
+
+  .diagram :global(.box-ghost) {
+    fill: transparent;
+    stroke: var(--color-border-strong);
+    stroke-dasharray: 4 3;
+  }
+
+  .diagram :global(.lbl) {
+    fill: var(--color-text);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  .diagram :global(.lbl-accent) {
+    fill: var(--color-accent);
+  }
+
+  .diagram :global(.sub) {
+    fill: var(--color-text-muted);
+    font-size: 9.5px;
+  }
+
+  .diagram :global(.note) {
+    fill: var(--color-text-faint);
+    font-size: 9.5px;
+    letter-spacing: 0.02em;
+  }
+
+  .diagram :global(.edge) {
+    fill: none;
+    stroke: var(--color-border-strong);
+    stroke-width: 1;
+  }
+
+  .diagram :global(.edge-accent) {
+    stroke: var(--color-accent-dim);
+  }
+
+  .diagram :global(.edge-dashed) {
+    stroke-dasharray: 4 3;
+  }
+
+  .diagram :global(.arrow) {
+    fill: var(--color-border-strong);
+  }
+
+  .diagram :global(.arrow-accent) {
+    fill: var(--color-accent-dim);
+  }
+
   figcaption {
     padding: 0.5rem 0.75rem;
     border-top: 1px solid var(--color-border);
