@@ -1,0 +1,79 @@
+---
+/**
+ * /now/ — what I'm working on right now. Updated 2026-06.
+ * Following the nownownow.com convention.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const updated = '2026-06';
+---
+
+<BaseLayout
+  title="now — Sam Latino"
+  description="What Sam Latino is working on right now — June 2026."
+>
+  <article class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <p class="prompt m-0 text-xs">
+      <span class="prompt-user">sam@latino</span><span class="prompt-sep"
+        >:</span
+      ><span class="prompt-path">~</span><span class="prompt-sigil">$</span>
+      <span class="text-text-muted">cat now.md</span>
+    </p>
+
+    <h1 class="mt-5 mb-0 text-2xl font-semibold md:text-3xl">now</h1>
+    <p class="mt-2 mb-0 font-mono text-xs text-text-faint">
+      updated {updated} &middot; <a class="no-underline hover:text-accent" href="https://nownownow.com/about">what is this?</a>
+    </p>
+
+    <hr class="my-8" />
+
+    <div class="prose">
+      <h2>Building</h2>
+      <p>
+        Six open-source projects in various states of done. The two that are
+        absorbing most of my time right now:
+      </p>
+      <ul>
+        <li>
+          <a href="/projects/longhaul/">longhaul</a> — getting the MCP server
+          conformant against the 2026-07-28 release-candidate spec, which
+          moved to a stateless core and a Tasks extension that changes how
+          long-running operations surface to clients. The signature test
+          (round-robining a task lifecycle across two independent server
+          instances sharing only SQLite) is passing; polish and docs are next.
+        </li>
+        <li>
+          <a href="/projects/millstone/">millstone</a> — the retrieval bench harness
+          is done and green; the actual corpus runs haven't executed yet. Running
+          them on the local GPU server means scheduling them around other workloads
+          and not fabricating numbers in the meantime. The post lands when the
+          harness does.
+        </li>
+      </ul>
+
+      <h2>Writing</h2>
+      <p>
+        Three posts are up in <a href="/writing/">writing</a>: the redcell
+        security sweep, the callcheck taxonomy, and the millstone crossover
+        argument. The case-study pages for each project will be updated as
+        bench runs complete — the posts link to them so the gap is visible.
+      </p>
+
+      <h2>Focus</h2>
+      <p>
+        Agent infrastructure that runs locally. The value proposition of
+        self-hosted inference gets clearer the more time you spend on the
+        operational details — latency, privacy routing, cost model, the fact
+        that your embedding model going stale doesn't invalidate your entire
+        index. I'm working through what that means for each layer of the stack.
+      </p>
+
+      <h2>Not doing</h2>
+      <p>
+        Not available for contract work right now. Not on social media in any
+        active way. If you want to reach me, <a href="mailto:latinosammy2@gmail.com">email</a>
+        is the right channel.
+      </p>
+    </div>
+  </article>
+</BaseLayout>

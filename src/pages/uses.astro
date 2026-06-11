@@ -1,0 +1,121 @@
+---
+/**
+ * /uses/ — stack, hardware, tooling. Honest, no affiliate links.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const stack = [
+  {
+    heading: 'Languages',
+    items: [
+      { name: 'Rust', note: 'daemons, CLI tools, anything that needs a static binary and zero runtime surprise' },
+      { name: 'Python', note: 'eval harnesses, model-API-adjacent code, anything with a fast iteration loop' },
+      { name: 'TypeScript', note: 'Astro, GitHub Actions, one-off scripts' },
+    ],
+  },
+  {
+    heading: 'Inference',
+    items: [
+      { name: 'vLLM', note: 'serving open-weight models, tool-call formatting, structured output' },
+      { name: 'LiteLLM', note: 'routing layer over vLLM; single key surface for all tooling' },
+      { name: 'Self-hosted GPU server', note: 'one machine on the local network; no cloud inference dependency for production workloads' },
+    ],
+  },
+  {
+    heading: 'Storage',
+    items: [
+      { name: 'SQLite (FTS5/BM25)', note: 'lexical retrieval by default; single-file deploys; zero ops overhead' },
+      { name: 'LanceDB', note: 'optional vector tier when semantic recall is genuinely required' },
+      { name: 'PostgreSQL', note: 'relational workloads that need constraints and joins' },
+    ],
+  },
+  {
+    heading: 'Rust crates (frequent)',
+    items: [
+      { name: 'axum + tokio', note: 'HTTP servers; async runtime' },
+      { name: 'rusqlite', note: 'SQLite, including FTS5 virtual tables' },
+      { name: 'criterion', note: 'micro-benchmarks; the source of every number in the bench tables' },
+      { name: 'insta', note: 'snapshot tests; catches regressions in rendered output' },
+      { name: 'serde / serde_json', note: 'everywhere' },
+    ],
+  },
+  {
+    heading: 'Python packages (frequent)',
+    items: [
+      { name: 'pytest + hypothesis', note: 'unit tests and property-based testing' },
+      { name: 'httpx', note: 'async HTTP client for model APIs and mockservers' },
+      { name: 'jsonschema', note: 'conformance checking in callcheck and eval-gate' },
+      { name: 'rich', note: 'terminal output in CLI harnesses' },
+    ],
+  },
+  {
+    heading: 'Editor and terminal',
+    items: [
+      { name: 'Neovim', note: 'primary editor' },
+      { name: 'Windows Terminal', note: 'daily driver shell' },
+      { name: 'Git + GitHub CLI (gh)', note: 'version control; CI via GitHub Actions' },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="uses — Sam Latino"
+  description="Stack, tooling, and hardware. Rust + Python for systems and evals; self-hosted GPU inference."
+>
+  <article class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <p class="prompt m-0 text-xs">
+      <span class="prompt-user">sam@latino</span><span class="prompt-sep"
+        >:</span
+      ><span class="prompt-path">~</span><span class="prompt-sigil">$</span>
+      <span class="text-text-muted">cat uses.md</span>
+    </p>
+
+    <h1 class="mt-5 mb-0 text-2xl font-semibold md:text-3xl">uses</h1>
+    <p class="mt-3 mb-0 max-w-[64ch] text-base text-text-muted">
+      The stack I reach for. No affiliate links; no sponsored placement.
+    </p>
+
+    <hr class="my-8" />
+
+    <div class="prose">
+      {
+        stack.map((section) => (
+          <>
+            <h2>{section.heading}</h2>
+            <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 font-mono text-[0.8125rem]">
+              {section.items.map((item) => (
+                <>
+                  <dt class="m-0 whitespace-nowrap text-text">{item.name}</dt>
+                  <dd class="m-0 text-text-muted">{item.note}</dd>
+                </>
+              ))}
+            </dl>
+          </>
+        ))
+      }
+
+      <h2>Hardware</h2>
+      <p>
+        One desktop as the daily driver. One GPU server on the local network
+        for model inference — Qwen models, served via vLLM. The GPU server
+        handles all production inference; nothing goes to a cloud provider
+        during a working session.
+      </p>
+      <p>
+        private mesh connects the machines. SSH is the management interface.
+        No web dashboards sitting exposed on the network.
+      </p>
+
+      <h2>What I don't use</h2>
+      <p>
+        Cloud LLM APIs during development. The cost model and the latency model
+        both change if you can assume the model is local, and I'd rather build
+        to that assumption than paper over the seams. The tradeoffs show up in
+        <a href="/projects/patchbay/">patchbay</a>'s privacy-routing design
+        and in the inference-policy decisions documented in
+        <a href="/projects/millstone/">millstone</a>.
+      </p>
+    </div>
+  </article>
+</BaseLayout>

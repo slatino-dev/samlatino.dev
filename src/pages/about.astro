@@ -1,0 +1,151 @@
+---
+/**
+ * /about/ — Sam Latino, honestly rendered.
+ * Education, background, what I build, where to find me.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const contact = [
+  { label: 'email', value: 'latinosammy2@gmail.com', href: 'mailto:latinosammy2@gmail.com' },
+  { label: 'github', value: 'github.com/slatino-dev', href: 'https://github.com/slatino-dev' },
+  { label: 'linkedin', value: 'linkedin.com/in/samlatino', href: 'https://www.linkedin.com/in/samlatino' },
+  { label: 'huggingface', value: 'huggingface.co/SamLatino', href: 'https://huggingface.co/SamLatino' },
+];
+---
+
+<BaseLayout
+  title="about — Sam Latino"
+  description="Sam Latino — AI engineer. Agent systems, evals, and self-hosted LLM infrastructure. B.S. Biological Engineering, LSU 2020."
+>
+  <article class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <p class="prompt m-0 text-xs">
+      <span class="prompt-user">sam@latino</span><span class="prompt-sep"
+        >:</span
+      ><span class="prompt-path">~</span><span class="prompt-sigil">$</span>
+      <span class="text-text-muted">cat about.md</span>
+    </p>
+
+    <h1 class="mt-5 mb-0 text-2xl font-semibold md:text-3xl">Sam Latino</h1>
+    <p class="mt-2 mb-0 font-mono text-sm text-text-muted">
+      AI engineer &middot; Rust + Python &middot; agent systems, evals, self-hosted LLM infrastructure
+    </p>
+
+    <hr class="my-8" />
+
+    <div class="prose">
+      <blockquote>
+        <p>
+          I build production AI systems — the orchestration layer, the evaluation harness,
+          and the inference infrastructure underneath. Six open-source projects in 2026,
+          all tested, all honest about what the numbers say (and where the numbers aren't
+          in yet).
+        </p>
+      </blockquote>
+
+      <h2>Background</h2>
+      <p>
+        B.S. Biological Engineering, Louisiana State University (2016–2020). The degree
+        taught me how to read a methods section critically and distrust a result that
+        wasn't reproduced. I apply the same instinct to ML benchmarks.
+      </p>
+      <p>
+        Before moving full-time into engineering I spent several years in enterprise
+        software sales. That context is useful: it gave me a product-oriented perspective
+        on technical decisions and a working model of how organizations actually adopt
+        infrastructure. I know what "simple to operate" means to the people who have to
+        operate it.
+      </p>
+
+      <h2>What I build</h2>
+      <p>
+        My work clusters around three areas:
+      </p>
+      <ul>
+        <li>
+          <strong>Agent systems.</strong> Orchestration harnesses, permission models,
+          tool-call routing, multi-round-trip flows. The practical question is always:
+          what breaks at the boundary between the model and the environment, and how do
+          you know before a user finds out?
+        </li>
+        <li>
+          <strong>Evals.</strong> Deterministic oracles where possible; statistical
+          noise floors where not. I treat an eval suite as code — it has to be wrong-able,
+          reproducible, and honest about confidence intervals. My own repos are dogfooded
+          through <a href="/projects/eval-gate/">eval-gate</a>.
+        </li>
+        <li>
+          <strong>Self-hosted inference.</strong> Running Qwen models on local GPUs via
+          vLLM. The operational cost of a cloud dependency compounds in ways that only
+          become visible when you run your own stack and compare. Local inference also
+          makes privacy routing tractable — one of the core ideas in
+          <a href="/projects/patchbay/">patchbay</a>.
+        </li>
+      </ul>
+      <p>
+        The projects are in Rust and Python. Rust for anything that runs as a daemon,
+        holds state, or needs a single-binary deploy. Python for eval harnesses and
+        anything that lives close to the model API surface.
+      </p>
+
+      <h2>Current projects</h2>
+      <p>
+        All six are open source. Brief descriptions with links:
+      </p>
+      <ul>
+        <li>
+          <a href="/projects/redcell/">redcell</a> — agent robustness testing mapped to
+          the OWASP Top 10 for Agentic Applications. Deterministic oracles,
+          146-case probe corpus, in-repo sandboxed target with three hardening levels.
+        </li>
+        <li>
+          <a href="/projects/longhaul/">longhaul</a> — an MCP server targeting the
+          2026-07-28 release-candidate spec: stateless core, Tasks extension,
+          InputRequired multi-round-trip, JSON Schema 2020-12 tool schemas. Statelessness
+          is proven by round-robining a task lifecycle across two server instances sharing
+          only SQLite.
+        </li>
+        <li>
+          <a href="/projects/patchbay/">patchbay</a> — single-binary OpenAI-compatible
+          gateway. Privacy routing enforced in the type system: a private request cannot
+          select an external backend, guaranteed by the type checker.
+        </li>
+        <li>
+          <a href="/projects/millstone/">millstone</a> — clean-room BM25 + tree-sitter
+          repo-map retrieval crate. Built to find out where the crossover between lexical
+          and vector retrieval actually lives on code corpora.
+        </li>
+        <li>
+          <a href="/projects/callcheck/">callcheck</a> — tool-calling and structured-output
+          conformance matrix for vLLM-served open models. An 11-label failure taxonomy,
+          k=3 resumable runner, in-repo mockserver so CI proves the scorer.
+        </li>
+        <li>
+          <a href="/projects/eval-gate/">eval-gate</a> — regression-eval CI gate. Embedding-free
+          scorers, drift detection with a k-repeat noise floor, sticky PR comments via
+          a GitHub Action.
+        </li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>
+        Open to conversations about agent infrastructure, evaluation methodology, and
+        self-hosted inference. No cold outreach forms — direct contact only.
+      </p>
+
+      <dl class="mt-5 mb-0 grid max-w-md grid-cols-[auto_1fr] gap-x-8 gap-y-1.5 font-mono text-[0.8125rem]">
+        {
+          contact.map((c) => (
+            <>
+              <dt class="m-0 text-text-faint">{c.label}</dt>
+              <dd class="m-0">
+                <a class="no-underline hover:text-accent" rel="me" href={c.href}>
+                  {c.value}
+                </a>
+              </dd>
+            </>
+          ))
+        }
+      </dl>
+    </div>
+  </article>
+</BaseLayout>
