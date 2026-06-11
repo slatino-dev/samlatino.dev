@@ -29,3 +29,141 @@ topics:
   - failure taxonomy
 tests: 165
 ---
+
+**"Supports tool calling" on a model card and "emits a parseable, schema-valid tool call on the wire" are different claims — callcheck measures the second one, per model, per task shape.**
+
+Lab notebook follows. Terse on purpose; the transcripts argue better than I
+do.
+
+## apparatus
+
+- **tasks** — YAML, roughly 40–50 definitions. Single call, parallel calls,
+  nested objects, enums, unicode arguments, int64 boundaries, `$ref` schemas.
+  The edge cases are the corpus; the happy path is one row.
+- **client** — OpenAI-compatible, aimed at vLLM-served open models.
+- **runner** — k=3 per matrix cell. Resumable mid-matrix: finished cells are
+  never re-run, half-finished ones are.
+- **checkers** — three stages, strictly ordered: parse, then jsonschema
+  validate, then semantic predicates. A failure stops at the first stage it
+  cannot pass. The order is the diagnosis.
+- **report** — per-model tables plus a failure-transcript gallery. The
+  gallery is the point. A label without its transcript invites arguing; a
+  label with one ends it.
+
+## procedure
+
+<ArchDiagram path="docs/pipeline.svg" caption="tasks → runner → model under test → three-stage checkers → labeled report; the mockserver run is the control that proves the scorer">
+  <svg viewBox="0 0 600 320" width="600" height="320" role="presentation">
+    <defs>
+      <marker id="cc-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow" d="M0 0L8 4L0 8z" />
+      </marker>
+      <marker id="cc-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-accent" d="M0 0L8 4L0 8z" />
+      </marker>
+    </defs>
+    <rect class="box" x="10" y="40" width="130" height="60" rx="3" />
+    <text class="lbl" x="75" y="64" text-anchor="middle">tasks/*.yaml</text>
+    <text class="sub" x="75" y="82" text-anchor="middle">~40–50 cases</text>
+    <rect class="box" x="180" y="40" width="130" height="60" rx="3" />
+    <text class="lbl" x="245" y="64" text-anchor="middle">runner</text>
+    <text class="sub" x="245" y="82" text-anchor="middle">k=3 · resumable per cell</text>
+    <rect class="box" x="360" y="20" width="230" height="52" rx="3" />
+    <text class="lbl" x="475" y="42" text-anchor="middle">vLLM endpoint</text>
+    <text class="sub" x="475" y="58" text-anchor="middle">open models — the matrix axis</text>
+    <rect class="box box-ghost" x="10" y="130" width="130" height="52" rx="3" />
+    <text class="lbl" x="75" y="151" text-anchor="middle">mockserver</text>
+    <text class="sub" x="75" y="168" text-anchor="middle">CI control</text>
+    <rect class="box box-accent" x="180" y="190" width="250" height="94" rx="3" />
+    <text class="lbl" x="305" y="212" text-anchor="middle">checkers</text>
+    <text class="sub" x="305" y="231" text-anchor="middle">1 · parse</text>
+    <text class="sub" x="305" y="246" text-anchor="middle">2 · jsonschema validate</text>
+    <text class="sub" x="305" y="261" text-anchor="middle">3 · semantic predicates</text>
+    <text class="sub" x="305" y="277" text-anchor="middle">→ one of 11 failure labels</text>
+    <rect class="box" x="470" y="206" width="120" height="60" rx="3" />
+    <text class="lbl" x="530" y="230" text-anchor="middle">report</text>
+    <text class="sub" x="530" y="248" text-anchor="middle">tables · gallery</text>
+    <line class="edge edge-accent" x1="140" y1="70" x2="176" y2="70" marker-end="url(#cc-g)" />
+    <polyline class="edge edge-accent" points="310,62 335,62 335,46 356,46" marker-end="url(#cc-g)" />
+    <polyline class="edge edge-dashed" points="245,100 245,156 144,156" marker-end="url(#cc-a)" />
+    <polyline class="edge edge-accent" points="475,72 475,170 305,170 305,186" marker-end="url(#cc-g)" />
+    <text class="note" x="390" y="163" text-anchor="middle">transcripts</text>
+    <polyline class="edge edge-dashed" points="75,182 75,234 176,234" marker-end="url(#cc-a)" />
+    <line class="edge edge-accent" x1="430" y1="236" x2="466" y2="236" marker-end="url(#cc-g)" />
+  </svg>
+</ArchDiagram>
+
+## taxonomy
+
+Every failure lands in exactly one of eleven labels. Mutually exclusive, or
+the matrix cells stop being comparable.
+
+<TerminalCapture title="taxonomy — 11 labels" caption="label names are the project's stable vocabulary; glosses paraphrase the checker logic">
+
+```text
+no_call             answered in prose, called nothing
+wrong_tool          called a tool, the wrong one
+malformed_json      arguments failed to parse at all
+schema_violation    parsed, failed jsonschema
+hallucinated_param  argument that isn't in the schema
+missing_required    required argument absent
+type_coercion       right field, wrong type ("42" for 42)
+escaping_error      quoting/escaping mangled the payload
+truncation          call cut off mid-emission
+parallel_collapse   N requested calls emitted as one
+spurious_call       called a tool when none was needed
+```
+
+</TerminalCapture>
+
+<DecisionNote title="wire-format conformance over agentic quality">
+
+The tempting benchmark is end-to-end: hand the model an agent loop, score task
+completion. That measures the loop, the prompts, the retry policy, and the
+model all at once — and needs a judge to score it, which imports a second
+model's opinion into the denominator. Conformance is narrower and strictly
+prior: if the call does not parse, does not validate, or names a tool that
+does not exist, no downstream quality is possible. Narrow also means
+mechanically checkable — parse, validate, predicate — so two runs of the
+matrix agree with each other and no judge is involved.
+
+Cost accepted: callcheck says nothing about whether a model picks good
+strategies. It is not trying to. Substrate first.
+
+</DecisionNote>
+
+## controls
+
+The scorer is itself under test. The in-repo mockserver replays known
+tool-call outputs — well-formed and deliberately malformed — and CI asserts
+the checkers assign exactly the expected labels. A conformance harness whose
+own scorer is unverified is just opinion with YAML. 165 tests, most of them
+this.
+
+<StatGrid cols={4}>
+  <Metric label="tests" value="165" detail="scorer correctness heavy" />
+  <Metric label="failure labels" value="11" detail="mutually exclusive" />
+  <Metric label="task definitions" value="40–50" detail="YAML, edge-case heavy" />
+  <Metric label="repeats" value="k=3" detail="resumable per cell" />
+</StatGrid>
+
+## status
+
+<BenchTable
+  path="results/matrix"
+  emptyNote="Matrix cells are model × task family × k=3. Runner, checkers, taxonomy, and mockserver controls: done and green. Conformance numbers for real vLLM-served models land here once the runs execute on local GPUs. No cell gets filled in by hand."
+/>
+
+<DeadEnd title="one checker, one verdict">
+
+First version: a single checker returning pass/fail plus a reason string.
+Reason strings do not aggregate. `malformed_json` and `schema_violation`
+blurred into "bad output," parallel-call collapse hid inside generic
+mismatches, and cells were not comparable across models — which is the entire
+job of a matrix. The fix was the taxonomy plus the strict three-stage order,
+and re-labeling old transcripts under the new scheme changed several
+conclusions I had already half-believed. Lesson recorded: design the failure
+vocabulary before collecting failures, and run k>1 from the start — k=1
+results moved enough between runs to mislead.
+
+</DeadEnd>

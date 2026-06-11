@@ -28,3 +28,142 @@ topics:
   - regression testing
 tests: 112
 ---
+
+**Eval scores wobble between identical runs, so a CI gate that diffs point estimates will either page your team for noise or get muted within a month — eval-gate fails builds only when a regression clears the measured noise floor.**
+
+## what it is
+
+A regression gate for LLM behavior, shaped like the rest of your CI: golden
+sets in JSONL, deterministic scorers, a drift check with a statistical floor,
+and a GitHub Action that posts one sticky PR comment and sets the exit code.
+The core is Python; the Action is TypeScript. The other five projects on this
+site run it on their own pull requests.
+
+## golden sets
+
+One case per line: the input, the expectation, and which scorer judges it.
+JSONL because line-oriented diffs review well and blame works per-case —
+a golden set you cannot code-review decays into folklore.
+
+## scorers
+
+| scorer | verdict basis |
+| --- | --- |
+| `exact` | string equality |
+| `regex` | pattern match |
+| `json_subset` | expected keys/values present in candidate JSON |
+| `numeric_tolerance` | within a configured tolerance |
+| `text_similarity` | token-level F1 |
+| `judge` *(optional)* | model-graded — see degradation below |
+
+Every scorer except the judge is embedding-free and fully deterministic: same
+inputs, same verdict, on any machine, at any time. That property is what makes
+a baseline from three weeks ago still meaningful today.
+
+## drift detection
+
+Run a baseline k times and you have a distribution, not a number. eval-gate
+compares the candidate's mean score against the baseline's confidence
+interval:
+
+- inside the interval — noise; the gate stays quiet
+- below it, past a configured threshold — regression; the build fails and
+  the comment names the threshold that tripped
+
+The k-repeat cost is real (k× eval spend on the baseline) and it buys the one
+property a gate cannot live without: failures the team believes.
+
+<ArchDiagram path="docs/gate-flow.svg" caption="golden set + candidate → scorers → drift gate (mean vs noise floor) → Action → sticky comment + exit code">
+  <svg viewBox="0 0 600 300" width="600" height="300" role="presentation">
+    <defs>
+      <marker id="eg-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow" d="M0 0L8 4L0 8z" />
+      </marker>
+      <marker id="eg-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-accent" d="M0 0L8 4L0 8z" />
+      </marker>
+    </defs>
+    <rect class="box" x="10" y="30" width="150" height="56" rx="3" />
+    <text class="lbl" x="85" y="54" text-anchor="middle">golden set</text>
+    <text class="sub" x="85" y="72" text-anchor="middle">JSONL · k-repeat baseline</text>
+    <rect class="box" x="10" y="120" width="150" height="56" rx="3" />
+    <text class="lbl" x="85" y="144" text-anchor="middle">candidate run</text>
+    <text class="sub" x="85" y="162" text-anchor="middle">the PR under test</text>
+    <rect class="box" x="220" y="66" width="170" height="84" rx="3" />
+    <text class="lbl" x="305" y="88" text-anchor="middle">scorers</text>
+    <text class="sub" x="305" y="106" text-anchor="middle">exact · regex · json_subset</text>
+    <text class="sub" x="305" y="121" text-anchor="middle">numeric_tolerance · token-F1</text>
+    <text class="sub" x="305" y="136" text-anchor="middle">judge — optional *</text>
+    <rect class="box box-accent" x="440" y="66" width="150" height="84" rx="3" />
+    <text class="lbl" x="515" y="88" text-anchor="middle">drift gate</text>
+    <text class="sub" x="515" y="106" text-anchor="middle">candidate mean vs</text>
+    <text class="sub" x="515" y="121" text-anchor="middle">baseline noise floor</text>
+    <text class="sub" x="515" y="136" text-anchor="middle">CI, not point estimate</text>
+    <rect class="box" x="220" y="210" width="370" height="56" rx="3" />
+    <text class="lbl" x="405" y="232" text-anchor="middle">GitHub Action</text>
+    <text class="sub" x="405" y="250" text-anchor="middle">sticky PR comment · fail-the-build thresholds</text>
+    <polyline class="edge" points="160,58 190,58 190,90 216,90" marker-end="url(#eg-a)" />
+    <polyline class="edge" points="160,148 190,148 190,126 216,126" marker-end="url(#eg-a)" />
+    <line class="edge edge-accent" x1="390" y1="108" x2="436" y2="108" marker-end="url(#eg-g)" />
+    <polyline class="edge edge-accent" points="515,150 515,206" marker-end="url(#eg-g)" />
+    <text class="note" x="10" y="290">* no endpoint configured → judge reports "skipped (no endpoint)" — visible, counted, never folded into a pass</text>
+  </svg>
+</ArchDiagram>
+
+## the Action
+
+The Action posts a sticky comment — one comment per PR, edited in place, not
+a fresh wall of text per push — with per-scorer deltas against baseline, and
+enforces the fail-the-build thresholds. Gate output you have to go hunting
+for is gate output nobody reads.
+
+## degradation, not silence
+
+If no judge endpoint is configured, judge-scored cases report
+`skipped (no endpoint)` in the comment: visible, counted, and never folded
+into a pass. A gate that silently skips part of its golden set is a gate
+that lies about coverage, which is worse than no gate.
+
+<DecisionNote title="a noise floor over point-estimate diffing">
+
+Point diffing is one run and one subtraction, and it is wrong in both
+directions: it fails builds when ordinary variance happens to cross zero, and
+it waves regressions through when they hide inside that same variance. The
+k-repeat baseline costs k× eval spend and answers the question a gate actually
+exists to answer — is this change distinguishable from noise?
+
+A confidence interval beat a hand-set epsilon for a maintenance reason: the
+right epsilon differs per golden set and drifts as the set grows, and nobody
+re-derives it. The baseline data already knows its own variance; the gate just
+asks it.
+
+</DecisionNote>
+
+## numbers
+
+<StatGrid cols={4}>
+  <Metric label="tests" value="112" detail="core + Action" />
+  <Metric label="scorers" value="6" detail="5 deterministic + judge" />
+  <Metric label="dogfooders" value="5" detail="the other projects here" />
+  <Metric label="PR comments" value="1" detail="sticky, edited in place" />
+</StatGrid>
+
+<BenchTable
+  path="bench/gate-overhead"
+  emptyNote="No performance claims yet. What belongs here: wall-clock gate overhead per PR at typical golden-set sizes, and scorer throughput — measured, not asserted. Until those runs exist, the table stays empty."
+/>
+
+<DeadEnd title="the embedding scorer">
+
+The first design included an embedding-similarity scorer for paraphrase
+credit. It earned its deletion three ways: it pulled a model dependency into
+a tool whose pitch is determinism; it version-pinned every score (new
+embedding model, new numbers, every baseline retired); and its similarity
+threshold was exactly the species of magic constant this gate exists to
+remove. Token-F1 grades paraphrase more crudely — and identically on every
+machine, forever, which is the property a CI gate actually needs. Where
+semantic judgment is genuinely required, that is the optional judge's job,
+behind an explicit degradation path. Cruder-and-reproducible beats
+smarter-and-drifting, in CI, every time.
+
+</DeadEnd>

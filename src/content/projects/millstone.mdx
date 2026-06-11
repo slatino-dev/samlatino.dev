@@ -29,3 +29,142 @@ topics:
   - benchmarking
 tests: 35
 ---
+
+**Embedding pipelines have become the default answer to code retrieval before anyone asks what BM25 with a code-aware tokenizer and a repo-map fails to find — millstone is that question, built carefully enough to be falsified.**
+
+The standard retrieval stack of the moment goes: chunk the repo, embed the
+chunks, stand up an ANN index, rerank, and accept that you now operate a model
+dependency, an index lifecycle, and a similarity score nobody can explain.
+Sometimes that stack earns its keep. My claim is narrower than "embeddings are
+bad": for code, the cheap lexical baseline is much stronger than its
+reputation, and most teams adopt the expensive stack without ever measuring
+the gap. Code is not natural language. Identifiers are deliberate names, not
+paraphrases — the developer who wrote `parse_task_header` will search for
+roughly those words — and the structure embeddings are supposed to recover
+implicitly is sitting right there in the syntax tree, explicitly, for free.
+
+So millstone takes the unfashionable side and arms it properly.
+
+## the apparatus
+
+Three pieces, all clean-room:
+
+- **Okapi BM25**, implemented from the literature and verified against
+  hand-computed values — not against another library's output, a distinction
+  that cost me a dead end (below).
+- **A code-aware tokenizer.** `camelCase` splits, `snake_case` splits,
+  unicode identifiers survive. Most of lexical retrieval's bad reputation on
+  code is actually tokenizer failure: if `TaskStore` never becomes `task` and
+  `store`, BM25 never had a chance.
+- **A tree-sitter repo-map.** Symbol table plus cross-file references — the
+  structural signal a flat index lacks, recovered from parse trees instead of
+  approximated by vectors.
+
+## the discipline
+
+A thesis with a home-team scoreboard is marketing, so the harness is built
+adversarially. Millstone, tantivy, and SQLite FTS5 run behind one retriever
+interface over the same corpora: SciFact, and a file-localization task built
+from SWE-bench-lite. Corpora are fetched by `xtask` with checksums and never
+committed. Scoring is nDCG@10, MRR, and Recall@k — the metric implementations
+are unit-tested against known values, and a Kendall-tau rank-correlation check
+against tantivy guards the whole rig's validity.
+
+<ArchDiagram path="bench/harness.svg" caption="one harness, three live retrievers, shared metrics — the vector baseline holds a documented empty seat until bench time">
+  <svg viewBox="0 0 600 360" width="600" height="360" role="presentation">
+    <defs>
+      <marker id="ms-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow" d="M0 0L8 4L0 8z" />
+      </marker>
+      <marker id="ms-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-accent" d="M0 0L8 4L0 8z" />
+      </marker>
+    </defs>
+    <rect class="box" x="10" y="20" width="240" height="72" rx="3" />
+    <text class="lbl" x="130" y="44" text-anchor="middle">corpora</text>
+    <text class="sub" x="130" y="62" text-anchor="middle">SciFact · SWE-bench-lite file-localization</text>
+    <text class="sub" x="130" y="77" text-anchor="middle">fetched by xtask, checksummed, never committed</text>
+    <rect class="box-ghost" x="10" y="120" width="580" height="220" rx="3" />
+    <text class="note" x="24" y="140">bench harness</text>
+    <rect class="box box-accent" x="30" y="155" width="250" height="105" rx="3" />
+    <text class="lbl" x="155" y="178" text-anchor="middle">millstone</text>
+    <text class="sub" x="155" y="198" text-anchor="middle">code-aware tokenizer → Okapi BM25</text>
+    <text class="sub" x="155" y="214" text-anchor="middle">tree-sitter repo-map</text>
+    <text class="sub" x="155" y="229" text-anchor="middle">symbols · cross-file refs</text>
+    <text class="sub" x="155" y="246" text-anchor="middle">BM25 hand-verified vs computed values</text>
+    <rect class="box" x="310" y="155" width="120" height="44" rx="3" />
+    <text class="lbl" x="370" y="181" text-anchor="middle">tantivy</text>
+    <rect class="box" x="310" y="212" width="120" height="44" rx="3" />
+    <text class="lbl" x="370" y="238" text-anchor="middle">SQLite FTS5</text>
+    <rect class="box box-ghost" x="310" y="272" width="260" height="52" rx="3" />
+    <text class="lbl" x="440" y="293" text-anchor="middle">fastembed + HNSW</text>
+    <text class="sub" x="440" y="310" text-anchor="middle">documented placeholder — deferred to bench time</text>
+    <rect class="box" x="450" y="155" width="130" height="100" rx="3" />
+    <text class="lbl" x="515" y="177" text-anchor="middle">metrics</text>
+    <text class="sub" x="515" y="195" text-anchor="middle">nDCG@10 · MRR</text>
+    <text class="sub" x="515" y="210" text-anchor="middle">Recall@k</text>
+    <text class="sub" x="515" y="227" text-anchor="middle">Kendall-τ validity</text>
+    <text class="sub" x="515" y="242" text-anchor="middle">vs tantivy</text>
+    <line class="edge edge-accent" x1="130" y1="92" x2="130" y2="151" marker-end="url(#ms-g)" />
+    <line class="edge edge-accent" x1="280" y1="205" x2="446" y2="205" marker-end="url(#ms-g)" />
+    <line class="edge" x1="430" y1="172" x2="446" y2="172" marker-end="url(#ms-a)" />
+    <line class="edge" x1="430" y1="234" x2="446" y2="234" marker-end="url(#ms-a)" />
+    <line class="edge edge-dashed" x1="500" y1="272" x2="500" y2="259" marker-end="url(#ms-a)" />
+  </svg>
+</ArchDiagram>
+
+The empty seat matters. The fastembed+HNSW vector baseline is a documented
+placeholder, deferred to bench time on purpose: wiring a half-tuned vector
+retriever now would produce exactly the kind of strawman comparison this
+project exists to complain about. When it runs, it runs properly or the
+result doesn't ship.
+
+<DecisionNote title="BM25 + repo-map over embeddings">
+
+What embeddings cost: an inference dependency in the indexing path, an index
+that must be rebuilt when the model changes, and relevance you cannot explain
+— an ANN neighbor is a number, while a BM25 hit decomposes into term
+statistics a human can audit. What embeddings buy: recall on paraphrase and
+cross-language concept queries, which is real and is exactly where lexical
+retrieval should lose.
+
+For code, the bet is that a code-aware tokenizer plus repo-map structure
+covers most of what teams actually query, at a fraction of the operational
+surface. That bet is falsifiable by construction — the harness scores both
+sides rather than arguing for one. "Yet" is the operative word in the thesis.
+
+</DecisionNote>
+
+## results
+
+<BenchTable
+  path="bench/retrieval-quality"
+  emptyNote="millstone vs tantivy vs SQLite FTS5 (vector baseline to follow): nDCG@10, MRR, Recall@k over SciFact and SWE-bench-lite file-localization. The harness, the metric tests, and the corpus fetchers are done and green; numbers land here when real runs do. If the thesis is wrong, this table is where it will say so."
+/>
+
+<StatGrid cols={4}>
+  <Metric label="tests" value="35" detail="incl. metric correctness" />
+  <Metric label="retrievers wired" value="3" detail="millstone · tantivy · FTS5" />
+  <Metric label="corpora" value="2" detail="SciFact · SWE-bench-lite" />
+  <Metric label="metrics" value="3" detail="nDCG@10 · MRR · Recall@k" />
+</StatGrid>
+
+<DeadEnd title="verifying BM25 against tantivy's scores">
+
+The first correctness check diffed millstone's BM25 scores against tantivy's
+for the same queries. Days went into chasing "bugs" that were nothing of the
+kind: two correct Okapi implementations legitimately disagree on absolute
+scores through normalization and parameter choices. The check was unfalsifiable
+in the worst way — every mismatch was ambiguous between my bug, their
+difference, or both. The replacement is two-headed and much better: absolute
+correctness against small, fully hand-computed examples, and agreement with
+tantivy measured as Kendall-tau over rankings, since rankings are the output
+that actually matters. I would reach for rank correlation first the next time
+two systems are supposed to "agree."
+
+</DeadEnd>
+
+If the vector baseline wins at bench time, the thesis falsifies in public and
+the table above will say so. That outcome would be worth shipping too — the
+point was never that embeddings lose, it's that nobody should pay for them on
+reputation alone.
