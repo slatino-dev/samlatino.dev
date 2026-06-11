@@ -1,0 +1,141 @@
+---
+/**
+ * BenchTable — benchmark results as a first-class design element.
+ *
+ * Two modes:
+ *  1. Data mode: pass `columns` + `rows` and it renders a dense mono table.
+ *     Cells may be plain values or `{ value, delta: 'good' | 'bad' }` —
+ *     `delta-bad` is the site's ONLY sanctioned use of the regression hue.
+ *  2. Empty mode: omit `rows` (or pass an empty array) and it renders an
+ *     honest "benchmarks in progress" state instead of inventing numbers.
+ *
+ * `provenance` is the fine print that makes a number trustworthy: which
+ * harness produced it, on what hardware, at which commit.
+ */
+export interface BenchColumn {
+  key: string;
+  label: string;
+  /** Right-align with tabular numerals. */
+  numeric?: boolean;
+}
+
+export type BenchCell =
+  string | number | { value: string | number; delta?: 'good' | 'bad' };
+
+interface Props {
+  /** term-bar label, e.g. "bench/route-path.tsv". */
+  path?: string;
+  caption?: string;
+  /** e.g. "produced by `cargo bench` at 3f2a1c0 on a Ryzen 7950X, 2026-06-02". */
+  provenance?: string;
+  columns?: BenchColumn[];
+  rows?: Record<string, BenchCell>[];
+  /** Override the default empty-state copy. */
+  emptyNote?: string;
+}
+
+const {
+  path = 'bench/results',
+  caption,
+  provenance,
+  columns,
+  rows,
+  emptyNote = 'Benchmarks in progress. This table renders from harness output — numbers appear here once real runs complete, and not before.',
+} = Astro.props;
+
+const hasData = !!columns && !!rows && rows.length > 0;
+
+function cellValue(cell: BenchCell | undefined): string {
+  if (cell === undefined) return '—';
+  if (typeof cell === 'object') return String(cell.value);
+  return String(cell);
+}
+
+function cellDelta(cell: BenchCell | undefined): 'good' | 'bad' | undefined {
+  if (cell !== undefined && typeof cell === 'object') return cell.delta;
+  return undefined;
+}
+---
+
+<figure class="term-frame bench">
+  <div class="term-bar">
+    {path}
+    <span class="term-bar-meta">{hasData ? `${rows.length} rows` : 'pending'}</span>
+  </div>
+
+  {
+    hasData ? (
+      <table class="data-table">
+        {caption && <caption class="bench-caption">{caption}</caption>}
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th scope="col" class:list={[{ num: col.numeric }]}>
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr>
+              {columns.map((col) => (
+                <td
+                  class:list={[
+                    {
+                      num: col.numeric,
+                      'delta-good': cellDelta(row[col.key]) === 'good',
+                      'delta-bad': cellDelta(row[col.key]) === 'bad',
+                    },
+                  ]}
+                >
+                  {cellValue(row[col.key])}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <div class="term-body">
+        <p class="empty-note">
+          <span aria-hidden="true">[ pending ]</span> {emptyNote}
+        </p>
+      </div>
+    )
+  }
+
+  {provenance && <figcaption class="provenance">{provenance}</figcaption>}
+</figure>
+
+<style>
+  .bench {
+    margin: 1.75rem 0;
+  }
+
+  .bench-caption {
+    caption-side: top;
+    padding: 0.6rem 0.75rem 0.1rem;
+  }
+
+  .empty-note {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  .empty-note span {
+    color: var(--color-text-faint);
+  }
+
+  .provenance {
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    color: var(--color-text-faint);
+  }
+</style>

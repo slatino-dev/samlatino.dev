@@ -1,0 +1,47 @@
+---
+/**
+ * PostCard — one writing entry in a list. Date-forward, mono metadata.
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'writing'>;
+  class?: string;
+}
+
+const { post, class: className = '' } = Astro.props;
+const { slug, title, date, description, tags } = post.data;
+
+const isoDate = date.toISOString().slice(0, 10);
+---
+
+<article class={`post-card ${className}`}>
+  <p class="m-0 font-mono text-xs text-text-faint">
+    <time datetime={isoDate}>{isoDate}</time>
+    {
+      tags.length > 0 && (
+        <span class="tags">
+          {' '}
+          &middot; {tags.join(' · ')}
+        </span>
+      )
+    }
+  </p>
+  <h3 class="mt-1 mb-0 text-base font-semibold">
+    <a class="no-underline hover:text-accent" href={`/writing/${slug}/`}>
+      {title}
+    </a>
+  </h3>
+  <p class="mt-1.5 mb-0 text-sm text-text-muted">{description}</p>
+</article>
+
+<style>
+  .post-card {
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .post-card:last-child {
+    border-bottom: 0;
+  }
+</style>

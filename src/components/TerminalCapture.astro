@@ -1,0 +1,51 @@
+---
+/**
+ * TerminalCapture — a captured terminal session as a figure. The slot takes
+ * a fenced code block (or raw <pre>); the frame supplies the chrome so the
+ * inner pre sheds its own border and padding.
+ */
+interface Props {
+  /** term-bar label, e.g. "patchbay — cargo run --release". */
+  title: string;
+  caption?: string;
+}
+
+const { title, caption } = Astro.props;
+---
+
+<figure class="term-frame capture">
+  <div class="term-bar">{title}</div>
+  <div class="capture-body">
+    <slot />
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .capture {
+    margin: 1.75rem 0;
+  }
+
+  .capture-body {
+    padding: 0.875rem 1rem;
+    overflow-x: auto;
+  }
+
+  .capture-body :global(pre) {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow-x: visible;
+  }
+
+  figcaption {
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    color: var(--color-text-faint);
+  }
+</style>

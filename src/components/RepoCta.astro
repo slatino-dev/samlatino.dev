@@ -1,0 +1,75 @@
+---
+/**
+ * RepoCta — the repo link block at the end of a case study. A clone line
+ * and a plain link. Deliberately no star counts, no badges, no shields:
+ * the work is the pitch.
+ */
+interface Props {
+  /** Full repository URL. */
+  repo: string;
+  /** Optional one-liner under the clone command. */
+  note?: string;
+}
+
+const { repo, note } = Astro.props;
+const repoPath = repo.replace(/^https?:\/\//, '');
+---
+
+<aside class="repo-cta" aria-label="Source repository">
+  <p class="clone prompt">
+    <span class="prompt-sigil">$</span>
+    <span class="cmd">git clone {repo}.git</span>
+  </p>
+  {note && <p class="note">{note}</p>}
+  <p class="link-line">
+    <a href={repo}>{repoPath}</a>
+    <span aria-hidden="true">&rarr;</span>
+  </p>
+</aside>
+
+<style>
+  .repo-cta {
+    margin: 2rem 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    padding: 0.875rem 1rem;
+  }
+
+  .clone {
+    margin: 0;
+    font-size: 0.8125rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .cmd {
+    color: var(--color-text);
+  }
+
+  .note {
+    margin: 0.5rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .link-line {
+    margin: 0.65rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .link-line a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .link-line a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent-dim);
+  }
+
+  .link-line span {
+    color: var(--color-text-faint);
+  }
+</style>

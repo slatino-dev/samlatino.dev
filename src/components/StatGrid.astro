@@ -1,0 +1,40 @@
+---
+/**
+ * StatGrid — hairline grid of Metric cells. The 1px gaps are drawn by the
+ * border-colored backdrop showing through; no shadows, no extra rules.
+ *
+ *   <StatGrid cols={3}>
+ *     <Metric label="tests" value="132" />
+ *     ...
+ *   </StatGrid>
+ */
+interface Props {
+  /** Column count at desktop width. Collapses to 2 below `sm`. */
+  cols?: 2 | 3 | 4;
+}
+
+const { cols = 3 } = Astro.props;
+---
+
+<dl class="stat-grid" style={`--cols: ${cols}`}>
+  <slot />
+</dl>
+
+<style>
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 1.75rem 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-border);
+    overflow: hidden;
+  }
+
+  @media (min-width: 40rem) {
+    .stat-grid {
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    }
+  }
+</style>

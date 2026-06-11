@@ -1,0 +1,50 @@
+---
+/**
+ * ArchDiagram — terminal-framed figure for an inline SVG architecture
+ * diagram. The SVG goes in the slot (inline, so it inherits CSS variables
+ * and stays crawlable text); `caption` becomes the figcaption.
+ */
+interface Props {
+  /** term-bar label, e.g. "docs/architecture.svg". */
+  path?: string;
+  caption: string;
+}
+
+const { path = 'docs/architecture.svg', caption } = Astro.props;
+---
+
+<figure class="term-frame arch">
+  <div class="term-bar">{path}</div>
+  <div class="diagram" role="img" aria-label={caption}>
+    <slot />
+  </div>
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<style>
+  .arch {
+    margin: 1.75rem 0;
+  }
+
+  .diagram {
+    padding: 1.25rem 1rem;
+    overflow-x: auto;
+  }
+
+  .diagram :global(svg) {
+    display: block;
+    margin-inline: auto;
+    max-width: 100%;
+    height: auto;
+    font-family: var(--font-mono);
+  }
+
+  figcaption {
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    color: var(--color-text-faint);
+  }
+</style>

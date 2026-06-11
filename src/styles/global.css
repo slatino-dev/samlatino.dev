@@ -363,6 +363,97 @@
   .term-frame .data-table tbody tr:last-child td {
     border-bottom: 0;
   }
+
+  /* Long-form rhythm — case-study and post bodies (MDX output). Headings
+     carry their markdown sigils; ## in accent-dim is the one flourish. */
+  .prose {
+    max-width: 70ch;
+  }
+
+  .prose p {
+    margin: 0 0 1rem;
+  }
+
+  .prose h2 {
+    margin: 2.5rem 0 0.75rem;
+    font-size: 1.125rem;
+  }
+
+  .prose h2::before {
+    content: '## ';
+    color: var(--color-accent-dim);
+  }
+
+  .prose h3 {
+    margin: 1.875rem 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  .prose h3::before {
+    content: '### ';
+    color: var(--color-text-faint);
+  }
+
+  .prose ul,
+  .prose ol {
+    margin: 0 0 1rem;
+    padding-left: 1.5rem;
+  }
+
+  .prose li {
+    margin: 0.3rem 0;
+  }
+
+  .prose li::marker {
+    color: var(--color-text-faint);
+  }
+
+  .prose pre {
+    margin: 1.5rem 0;
+  }
+
+  .prose blockquote {
+    margin: 1.5rem 0;
+    padding: 0 0 0 1rem;
+    border-left: 1px solid var(--color-border-strong);
+    color: var(--color-text-muted);
+  }
+
+  .prose blockquote p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Plain markdown tables pick up the data-table look without the class. */
+  .prose table {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.45;
+  }
+
+  .prose table th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-faint);
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--color-border-strong);
+  }
+
+  .prose table td {
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+
+  .prose table td:first-child {
+    color: var(--color-text);
+  }
 }
 
 @keyframes cursor-blink {

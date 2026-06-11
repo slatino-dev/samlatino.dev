@@ -1,0 +1,58 @@
+---
+/**
+ * DecisionNote — a "why X over Y" callout. Engineering judgment, recorded
+ * where it happened. Title carries the tradeoff ("SQLite over Postgres");
+ * the slot carries the reasoning.
+ */
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<aside class="decision" aria-label={`Decision: ${title}`}>
+  <p class="label">
+    <span class="marker" aria-hidden="true">##</span> decision &mdash; {title}
+  </p>
+  <div class="body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .decision {
+    margin: 1.75rem 0;
+    border: 1px solid var(--color-border);
+    border-left: 1px solid var(--color-accent-dim);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    padding: 0.875rem 1rem;
+  }
+
+  .label {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--color-text);
+  }
+
+  .marker {
+    color: var(--color-accent-dim);
+  }
+
+  .body {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .body :global(p) {
+    margin: 0 0 0.65rem;
+  }
+
+  .body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>
