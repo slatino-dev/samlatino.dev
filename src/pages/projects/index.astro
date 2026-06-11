@@ -1,0 +1,58 @@
+---
+/**
+ * /projects/ — project listing. Dense, date-sorted by order key.
+ * Each card links to the case-study page.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+const totalTests = projects.reduce((sum, p) => sum + (p.data.tests ?? 0), 0);
+---
+
+<BaseLayout
+  title="projects — Sam Latino"
+  description="Six open-source projects: agent security, MCP, privacy-routing gateways, retrieval, tool-calling conformance, and eval CI. Rust + Python."
+>
+  <section class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <p class="prompt m-0 text-xs">
+      <span class="prompt-user">sam@latino</span><span class="prompt-sep"
+        >:</span
+      ><span class="prompt-path">~/projects</span><span class="prompt-sigil"
+        >$</span
+      >
+      <span class="text-text-muted">ls -lt</span>
+    </p>
+
+    <h1 class="mt-5 mb-0 text-2xl font-semibold md:text-3xl">projects</h1>
+    <p class="mt-3 mb-0 max-w-[64ch] text-base text-text-muted">
+      Agent systems, evals, retrieval, and self-hosted inference infrastructure.
+      Every test count is from the project's own suite — no estimates.
+    </p>
+
+    <div
+      class="mt-8 flex items-baseline justify-between border-b border-border pb-2"
+    >
+      <span class="font-mono text-xs text-text-faint">
+        {projects.length} projects
+      </span>
+      <span class="font-mono text-xs text-text-faint">
+        {totalTests} tests total
+      </span>
+    </div>
+
+    <ul class="mt-5 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-2">
+      {
+        projects.map((project) => (
+          <li>
+            <ProjectCard project={project} />
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>

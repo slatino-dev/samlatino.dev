@@ -11,6 +11,7 @@ import type { CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import RepoCta from '../components/RepoCta.astro';
 import { mdxKit } from '../components/mdx-kit';
+import { buildSoftwareSourceCode, SITE_URL } from '../lib/schema';
 
 interface Props {
   entry: CollectionEntry<'projects'>;
@@ -21,9 +22,18 @@ const { slug, title, tagline, repo, language, status, topics, tests } =
   entry.data;
 
 const { Content } = await render(entry);
+
+const codeSchema = buildSoftwareSourceCode({
+  name: title,
+  description: tagline,
+  url: `${SITE_URL}/projects/${slug}/`,
+  repo,
+  language,
+  topics,
+});
 ---
 
-<BaseLayout title={`${title} — Sam Latino`} description={tagline}>
+<BaseLayout title={`${title} — Sam Latino`} description={tagline} schemas={[codeSchema]}>
   <article class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
     <header class="case-header">
       <p class="prompt m-0 text-xs">

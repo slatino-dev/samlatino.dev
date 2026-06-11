@@ -1,0 +1,21 @@
+---
+/**
+ * JsonLd — injects a JSON-LD <script type="application/ld+json"> block.
+ * Pass any schema.org object (Person, SoftwareSourceCode, BlogPosting…).
+ * The component renders nothing visible; it is purely for structured data.
+ *
+ * Usage:
+ *   import JsonLd from '../components/JsonLd.astro';
+ *   import { buildPerson } from '../lib/schema';
+ *   <JsonLd schema={buildPerson()} />
+ */
+
+interface Props {
+  schema: Record<string, unknown>;
+}
+
+const { schema } = Astro.props;
+const json = JSON.stringify(schema);
+---
+
+<script is:inline type="application/ld+json" set:html={json}></script>

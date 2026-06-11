@@ -7,6 +7,7 @@ import { render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import { mdxKit } from '../components/mdx-kit';
+import { buildBlogPosting, SITE_URL } from '../lib/schema';
 
 interface Props {
   entry: CollectionEntry<'writing'>;
@@ -17,9 +18,17 @@ const { slug, title, date, description, tags } = entry.data;
 
 const { Content } = await render(entry);
 const isoDate = date.toISOString().slice(0, 10);
+
+const postSchema = buildBlogPosting({
+  title,
+  description,
+  url: `${SITE_URL}/writing/${slug}/`,
+  date,
+  tags,
+});
 ---
 
-<BaseLayout title={`${title} — Sam Latino`} description={description}>
+<BaseLayout title={`${title} — Sam Latino`} description={description} schemas={[postSchema]}>
   <article class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
     <header>
       <p class="prompt m-0 text-xs">

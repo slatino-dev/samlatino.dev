@@ -1,17 +1,23 @@
 ---
 import '../styles/global.css';
+import JsonLd from '../components/JsonLd.astro';
+import { buildPerson } from '../lib/schema';
 
 interface Props {
   title: string;
   description?: string;
+  /** Additional JSON-LD schemas to inject (SoftwareSourceCode, BlogPosting…). */
+  schemas?: Record<string, unknown>[];
 }
 
 const {
   title,
   description = 'Sam Latino — AI engineer. Agent systems, evals, and self-hosted LLM infrastructure.',
+  schemas = [],
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const personSchema = buildPerson();
 
 const nav = [
   { href: '/projects/', label: 'projects' },
@@ -40,6 +46,8 @@ const elsewhere = [
     <meta name="theme-color" content="#0a0d0b" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <JsonLd schema={personSchema} />
+    {schemas.map((s) => <JsonLd schema={s} />)}
   </head>
   <body class="flex min-h-dvh flex-col">
     <a class="skip-link" href="#main">skip to content</a>

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://samlatino.dev/schemas/metrics-manifest.json",
+  "description": "Manifest of project bench-metric files consumed by scripts/sync-metrics.mjs. Each entry maps a project slug to the repo path where bench/site-metrics.json lives. The sync script validates, stamps git sha + date, and writes src/data/metrics/<slug>.json.",
+  "projects": [
+    {
+      "slug": "redcell",
+      "repo": "https://github.com/slatino-dev/redcell",
+      "metricsPath": "bench/site-metrics.json",
+      "description": "Attack success rate and severity-weighted risk across none/basic/hardened levels"
+    },
+    {
+      "slug": "longhaul",
+      "repo": "https://github.com/slatino-dev/longhaul",
+      "metricsPath": "bench/site-metrics.json",
+      "description": "MCP conformance test pass rates, statelessness round-robin latency"
+    },
+    {
+      "slug": "patchbay",
+      "repo": "https://github.com/slatino-dev/patchbay",
+      "metricsPath": "bench/site-metrics.json",
+      "description": "Route-path criterion bench results; overhead vs baseline"
+    },
+    {
+      "slug": "millstone",
+      "repo": "https://github.com/slatino-dev/millstone",
+      "metricsPath": "bench/site-metrics.json",
+      "description": "nDCG@10, MRR, Recall@k across millstone/tantivy/FTS5/vector retrievers"
+    },
+    {
+      "slug": "callcheck",
+      "repo": "https://github.com/slatino-dev/callcheck",
+      "metricsPath": "bench/site-metrics.json",
+      "description": "Per-model per-task conformance rates; taxonomy label breakdown"
+    },
+    {
+      "slug": "eval-gate",
+      "repo": "https://github.com/slatino-dev/eval-gate",
+      "metricsPath": "bench/site-metrics.json",
+      "description": "Scorer accuracy on golden sets; false-positive rate of drift detector"
+    }
+  ]
+}
