@@ -50,7 +50,8 @@
   --color-border-strong: #2e3a31;
   --color-text: #dce3da;
   --color-text-muted: #96a298;
-  --color-text-faint: #5d6a60;
+  /* 4.6:1 on surface-2, 5.2:1 on bg — the dimmest text still has to pass AA. */
+  --color-text-faint: #79887d;
   --color-accent: #3fdf8b;
   --color-accent-dim: #2da866;
   --color-accent-tint: rgb(63 223 139 / 0.08);
