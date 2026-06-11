@@ -1,5 +1,8 @@
 {
   "name": "samlatino-dev",
   "compatibility_date": "2026-06-01",
-  "assets": { "directory": "./dist", "not_found_handling": "404-page" }
+  "assets": { "directory": "./dist", "not_found_handling": "404-page" },
+  "routes": [
+    { "pattern": "samlatino.dev", "custom_domain": true }
+  ]
 }
