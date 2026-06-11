@@ -1,0 +1,232 @@
+{
+  "meta": {
+    "app_id": "2026-06-11-samlatino-ai-engineer",
+    "archetype": "ai-infra",
+    "jd_note": null,
+    "generated": "2026-06-11",
+    "target_pages": 1
+  },
+  "contact": {
+    "name": "Sam Latino",
+    "email": "Latinosammy2@gmail.com",
+    "phone": "redacted",
+    "location": "Panama City, FL",
+    "github": "github.com/slatino-dev",
+    "portfolio": "samlatino.dev",
+    "linkedin": "linkedin.com/in/samlatino"
+  },
+  "summary": "AI engineer who builds production agent systems, evaluation infrastructure, and self-hosted LLM stacks. Six open-source projects in 2026 covering agent security testing, MCP server implementation, privacy-routing gateways, BM25 retrieval, tool-call conformance, and eval CI. Enterprise software background: ranked 3rd in ADP's Southeast Division at 132% of quota, with direct experience translating technical complexity into decision-maker terms.",
+  "skills": [
+    {
+      "group": "Languages",
+      "items": ["Rust", "Python", "TypeScript", "SQL", "Bash"]
+    },
+    {
+      "group": "Agent & LLM",
+      "items": ["LangGraph", "LangChain", "MCP (Model Context Protocol)", "vLLM", "LiteLLM", "structured output", "tool-call parsing", "prompt engineering"]
+    },
+    {
+      "group": "Retrieval",
+      "items": ["SQLite FTS5/BM25", "tree-sitter repo-map", "LanceDB", "Pinecone", "embedding models"]
+    },
+    {
+      "group": "Infrastructure",
+      "items": ["AWS (EC2, S3, Lambda)", "Docker", "axum", "tokio", "FastAPI", "WebSocket", "Linux"]
+    },
+    {
+      "group": "Data & Evals",
+      "items": ["DuckDB", "PostgreSQL", "criterion", "insta snapshots", "LangSmith"]
+    }
+  ],
+  "experience": [
+    {
+      "company": "Vensure Employer Solutions",
+      "title": "Business Consultant, PEO Solutions",
+      "location": "Panama City, FL",
+      "start": "2025-12",
+      "end": "present",
+      "bullets": [
+        {
+          "text": "Advise business owners on HR technology stack selection, building cost models and integration roadmaps that guide purchase decisions for multi-entity accounts",
+          "source": "candidate-profile/employment/emp-vensure.md",
+          "confidence": "high",
+          "keywords": ["consulting", "stakeholder communication", "cost modeling"]
+        }
+      ]
+    },
+    {
+      "company": "ADP",
+      "title": "Account Executive",
+      "location": "Panama City, FL",
+      "start": "2024-03",
+      "end": "2025-12",
+      "bullets": [
+        {
+          "text": "Ranked 3rd in the Southeast Division at 132% of quota across 21 months, closing $500K+ in annualized contracts across multi-client HCM deals",
+          "source": "candidate-profile/evidence/evd-adp-sales-automation.md",
+          "confidence": "high",
+          "keywords": ["quota attainment", "enterprise sales", "HCM"]
+        },
+        {
+          "text": "Reverse-engineered Salesforce internal APIs and shipped a Playwright and FastAPI automation layer that cut manual CRM operations by more than 4 hours per day",
+          "source": "candidate-profile/evidence/evd-salesforce-reverse-engineering.md",
+          "confidence": "high",
+          "keywords": ["Python", "FastAPI", "Playwright", "automation", "Salesforce"]
+        }
+      ]
+    },
+    {
+      "company": "Medline Industries",
+      "title": "Operations Supervisor",
+      "location": "Panama City, FL",
+      "start": "2021-01",
+      "end": "2022-01",
+      "bullets": [
+        {
+          "text": "Supervised a 14-person distribution team and built automated reporting tools for medical supply logistics, cutting daily manual data entry by roughly 2 hours per shift",
+          "source": "candidate-profile/evidence/evd-medline-ops-automation.md",
+          "confidence": "high",
+          "keywords": ["operations", "automation", "team lead", "logistics"]
+        }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "redcell",
+      "stack": ["Rust", "Python"],
+      "link": "github.com/slatino-dev/redcell",
+      "start": "2026-01",
+      "end": "present",
+      "bullets": [
+        {
+          "text": "Agent robustness tester mapping to the OWASP Top 10 for Agentic Applications, with 146 deterministic probe cases and an in-repo sandboxed target at three hardening levels",
+          "source": "candidate-profile/projects/prj-hambone.md",
+          "confidence": "high",
+          "keywords": ["agent security", "OWASP", "red teaming", "Rust"]
+        }
+      ]
+    },
+    {
+      "name": "longhaul",
+      "stack": ["Rust"],
+      "link": "github.com/slatino-dev/longhaul",
+      "start": "2026-01",
+      "end": "present",
+      "bullets": [
+        {
+          "text": "MCP server targeting the 2026-07-28 RC spec: stateless core, Tasks extension, InputRequired back-and-forth flows, statelessness proven by routing a task lifecycle across 2 server instances sharing only SQLite",
+          "source": "candidate-profile/projects/prj-hambone.md",
+          "confidence": "high",
+          "keywords": ["MCP", "Model Context Protocol", "Rust", "SQLite", "stateless"]
+        }
+      ]
+    },
+    {
+      "name": "patchbay",
+      "stack": ["Rust", "axum"],
+      "link": "github.com/slatino-dev/patchbay",
+      "start": "2026-01",
+      "end": "present",
+      "bullets": [
+        {
+          "text": "Single-binary OpenAI-compatible gateway with privacy routing enforced at the type level: the type checker prevents a private request from selecting an external backend at compile time",
+          "source": "candidate-profile/projects/prj-hambone.md",
+          "confidence": "high",
+          "keywords": ["Rust", "axum", "privacy routing", "type safety", "gateway"]
+        }
+      ]
+    },
+    {
+      "name": "millstone",
+      "stack": ["Rust", "SQLite FTS5", "tree-sitter"],
+      "link": "github.com/slatino-dev/millstone",
+      "start": "2026-01",
+      "end": "present",
+      "bullets": [
+        {
+          "text": "Clean-room BM25 plus tree-sitter repo-map retrieval crate; benchmarks on code corpora establish where lexical retrieval crosses over against vector recall",
+          "source": "candidate-profile/projects/prj-hambone.md",
+          "confidence": "high",
+          "keywords": ["BM25", "FTS5", "retrieval", "tree-sitter", "Rust"]
+        }
+      ]
+    },
+    {
+      "name": "callcheck",
+      "stack": ["Python", "vLLM"],
+      "link": "github.com/slatino-dev/callcheck",
+      "start": "2026-01",
+      "end": "present",
+      "bullets": [
+        {
+          "text": "Tool-calling and structured-output conformance matrix for vLLM-served open models: 11-label failure taxonomy, k=3 resumable runner, in-repo mock server so CI can prove the scorer without live model access",
+          "source": "candidate-profile/projects/prj-hambone.md",
+          "confidence": "high",
+          "keywords": ["vLLM", "tool calling", "structured output", "evals", "Python"]
+        }
+      ]
+    },
+    {
+      "name": "eval-gate",
+      "stack": ["Python", "GitHub Actions"],
+      "link": "github.com/slatino-dev/eval-gate",
+      "start": "2026-01",
+      "end": "present",
+      "bullets": [
+        {
+          "text": "Regression-eval CI gate with embedding-free scorers, drift detection with a k-repeat noise floor, and sticky PR comments via a GitHub Actions integration",
+          "source": "candidate-profile/projects/prj-hambone.md",
+          "confidence": "high",
+          "keywords": ["evals", "CI/CD", "drift detection", "GitHub Actions", "Python"]
+        }
+      ]
+    },
+    {
+      "name": "Agentic Execution Platform",
+      "stack": ["Python", "LangGraph", "DuckDB", "WebSocket", "Docker", "AWS EC2"],
+      "link": null,
+      "start": null,
+      "end": null,
+      "bullets": [
+        {
+          "text": "Orchestrated a 6-agent LangGraph system with one agent per stage: data ingestion, decision logic, execution, risk management, and settlement running on live financial markets",
+          "source": "candidate-profile/evidence/evd-langgraph-six-agent-platform.md",
+          "confidence": "high",
+          "keywords": ["LangGraph", "agent orchestration", "multi-agent", "Python"]
+        },
+        {
+          "text": "Streamed concurrent WebSocket feeds carrying 117 data points per tick into DuckDB, processing a corpus of 3.1M records for strategy backtesting",
+          "source": "candidate-profile/evidence/evd-realtime-data-pipeline.md",
+          "confidence": "high",
+          "keywords": ["WebSocket", "DuckDB", "data pipeline", "real-time"]
+        }
+      ]
+    },
+    {
+      "name": "CRM Automation",
+      "stack": ["Python", "Playwright", "FastAPI"],
+      "link": null,
+      "start": null,
+      "end": null,
+      "bullets": [
+        {
+          "text": "Enterprise CRM automation built on Playwright and FastAPI that reduced manual sales-ops time by more than 4 hours per rep per day, tested against a mock Salesforce API surface",
+          "source": "candidate-profile/evidence/evd-salesforce-reverse-engineering.md",
+          "confidence": "high",
+          "keywords": ["Playwright", "FastAPI", "Python", "automation", "Salesforce"]
+        }
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Louisiana State University",
+      "credential": "Bachelor of Science, Biological Engineering",
+      "location": "Baton Rouge, LA",
+      "start": "2016",
+      "end": "2020",
+      "details": "Distinguished Communicator Certified"
+    }
+  ]
+}
