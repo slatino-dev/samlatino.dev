@@ -1,0 +1,143 @@
+---
+slug: bm25-beat-my-vector-database
+title: BM25 beat my vector database (sometimes)
+date: 2026-06-10
+description: >-
+  A crossover framework for lexical versus vector retrieval on code — and the
+  adversarial bench harness I built so my own argument can lose.
+tags:
+  - retrieval
+  - bm25
+  - benchmarks
+---
+
+The default retrieval stack in 2026 goes: chunk the corpus, embed the chunks,
+stand up an approximate-nearest-neighbor index, rerank, ship. It works. It
+also costs you a model dependency in the indexing path, an index that goes
+stale every time the embedding model changes, and a relevance score nobody on
+the team can explain. The part that bothers me is not the cost — it's that
+almost nobody measures the thing the stack replaced before paying it.
+
+A confession about the title, so we're square. The parenthesis is doing the
+honest work. I built [millstone](/projects/millstone/) — a clean-room BM25 +
+tree-sitter retrieval crate with a bench harness against tantivy, SQLite FTS5,
+and a vector baseline — precisely to find out where "sometimes" lives, and the
+head-to-head numbers from that harness are not published yet. The harness, the
+metric implementations, and the corpus pipeline are done and green; the runs
+come next. So this post argues mechanism and method, not scoreboard. When the
+numbers land they go in the case study's results table, and if the vector side
+wins on my corpora, that table will say so in public.
+
+What I can defend today is a framework for predicting the winner, and a rig
+careful enough to falsify it.
+
+## why code is different
+
+Embeddings exist to solve the vocabulary problem: the user says "how do I
+reset my password" and the document says "credential rotation," and no amount
+of term matching will connect them. That problem is real. It is also mostly
+absent from code retrieval.
+
+Identifiers are deliberate names, not paraphrases. The developer who wrote
+`parse_task_header` will search for roughly those words, and so will the
+developer who just read a stack trace containing them. The query vocabulary
+and the corpus vocabulary are the same vocabulary, because the same population
+wrote both. That single property removes most of what you are paying
+embeddings to recover.
+
+Two more things follow from code being code:
+
+- **Most of lexical retrieval's bad reputation on code is tokenizer failure,
+  not ranking failure.** If `TaskStore` never becomes `task` and `store`, BM25
+  never had a chance, and the autopsy blames the wrong organ. millstone's
+  tokenizer splits camelCase and snake_case and survives unicode identifiers
+  before any scoring happens.
+- **The structure embeddings recover implicitly is sitting in the syntax tree
+  explicitly, for free.** A tree-sitter pass gives you a symbol table and
+  cross-file references — deterministic, inspectable, no inference step. That
+  repo-map is the structural half of millstone, and it answers the class of
+  query ("where is this defined, who calls it") that neither BM25 nor cosine
+  similarity answers well alone.
+
+## the crossover framework
+
+Strip the tribalism out and the choice reduces to two questions: how far is
+your query vocabulary from your corpus vocabulary, and what operational budget
+does retrieval get. Everything else is detail.
+
+| dimension | lexical wins | vectors win |
+| --- | --- | --- |
+| query vocabulary | shares terms with the corpus — code, your own notes | paraphrases it — support questions, other people's docs |
+| corpus | code, curated technical text | large, uncurated natural language |
+| explaining a hit | term statistics you can audit | a similarity score you mostly can't |
+| ops surface | a tokenizer and an index | a model, an index lifecycle, rebuilds on model change |
+| synonym and cross-lingual recall | weak by construction | the actual selling point |
+
+Condensed: vectors buy paraphrase recall, and everything else is cost. For
+code — where queries and corpus share an author population — you are usually
+buying recall you don't need with operational complexity you definitely have
+to keep. For a support knowledge base queried by strangers, the purchase makes
+sense. The mistake is not choosing vectors; the mistake is choosing them by
+reputation, for every corpus, without a baseline.
+
+Hence the thesis millstone exists to test: you probably don't need embeddings
+*yet*. "Yet" is load-bearing. Corpora grow, query populations drift away from
+the authors, paraphrase creeps in. The framework predicts a crossover; the
+harness is for locating it.
+
+## building the argument so it can lose
+
+A thesis with a home-team scoreboard is marketing. So the bench harness is
+adversarial by construction:
+
+- millstone, tantivy, and SQLite FTS5 run behind one retriever interface,
+  over the same corpora — SciFact, plus a file-localization task built from
+  SWE-bench-lite. Two strong, independent lexical implementations keep my own
+  crate honest.
+- The metrics — nDCG@10, MRR, Recall@k — are unit-tested against known
+  values, because a bug in the scorer is indistinguishable from a result.
+- A Kendall-tau rank-correlation check against tantivy guards the rig's
+  validity. (An earlier attempt diffed absolute BM25 scores between the two
+  and burned days on "bugs" that were legitimate normalization differences —
+  rankings are the output that matters, so rankings are what get compared.
+  The full dead-end story is in the [case study](/projects/millstone/).)
+- The fastembed+HNSW vector baseline is a documented placeholder, deferred to
+  bench time on purpose. Wiring a half-tuned vector retriever now would
+  manufacture exactly the strawman comparison this project exists to complain
+  about. When it runs, it runs properly, or the result doesn't ship.
+
+Corpora are fetched by an xtask with checksums and never committed. From a
+clone, the whole experiment reproduces:
+
+```bash
+git clone https://github.com/slatino-dev/millstone.git
+cd millstone
+make reproduce   # fetch checksummed corpora, run every retriever, emit the tables
+```
+
+That command is the difference between this post and a hot take. The
+methodology is finished and inspectable today; the numbers arrive when the
+real runs do, and the [millstone case study](/projects/millstone/) is where
+they will land first.
+
+## what I'd actually tell a team
+
+Don't take my side of the argument either — take the measurement.
+
+Start with the cheap stack: BM25 behind a tokenizer that understands your
+identifiers, plus structure from the parser if your corpus is code. Write
+down ten real queries from your real users. Score both stacks on those before
+adopting either. If paraphrase recall is measurably costing you answers, add
+vectors — ideally as a hybrid with rank fusion rather than a replacement —
+and you'll know precisely what the second system is paying for. If it isn't,
+you just declined a model dependency, an index lifecycle, and an
+unexplainable relevance score, and your retrieval still works when the GPU is
+busy.
+
+BM25 beat my vector database sometimes. The interesting engineering is in the
+word "sometimes," and that word is checkable.
+
+<RepoCta
+  repo="https://github.com/slatino-dev/millstone"
+  note="Okapi BM25 hand-verified against computed values, a code-aware tokenizer, a tree-sitter repo-map, and the bench harness from this post — 35 tests, results table honest until the runs land."
+/>
