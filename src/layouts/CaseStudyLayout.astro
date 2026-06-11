@@ -1,0 +1,82 @@
+---
+/**
+ * CaseStudyLayout — renders a `projects` collection entry: header built
+ * from frontmatter (title, tagline, language, status, tests, topics, repo),
+ * then the MDX body with the component kit injected. A frontmatter-only
+ * stub renders as a header plus repo block; the full case study lands in
+ * the same file later with zero re-plumbing.
+ */
+import { render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import RepoCta from '../components/RepoCta.astro';
+import { mdxKit } from '../components/mdx-kit';
+
+interface Props {
+  entry: CollectionEntry<'projects'>;
+}
+
+const { entry } = Astro.props;
+const { slug, title, tagline, repo, language, status, topics, tests } =
+  entry.data;
+
+const { Content } = await render(entry);
+---
+
+<BaseLayout title={`${title} — Sam Latino`} description={tagline}>
+  <article class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <header class="case-header">
+      <p class="prompt m-0 text-xs">
+        <span class="prompt-user">sam@latino</span><span class="prompt-sep"
+          >:</span
+        ><span class="prompt-path">~/projects/{slug}</span><span
+          class="prompt-sigil">$</span
+        >
+        <span class="text-text-muted">cat README.md</span>
+      </p>
+
+      <h1 class="mt-5 mb-0 text-2xl font-semibold md:text-3xl">{title}</h1>
+      <p class="mt-3 mb-0 max-w-[64ch] text-base text-text-muted">{tagline}</p>
+
+      <p
+        class="mt-6 mb-0 flex flex-wrap gap-x-6 gap-y-1.5 font-mono text-[0.8125rem] text-text-muted"
+      >
+        <span><span class="text-text-faint">lang&nbsp;</span>{language}</span>
+        <span><span class="text-text-faint">status&nbsp;</span>{status}</span>
+        {
+          tests && (
+            <span>
+              <span class="text-text-faint">tests&nbsp;</span>
+              {tests}
+            </span>
+          )
+        }
+        <span>
+          <span class="text-text-faint">repo&nbsp;</span>
+          <a href={repo}>{repo.replace(/^https?:\/\//, '')}</a>
+        </span>
+      </p>
+
+      {
+        topics.length > 0 && (
+          <ul
+            class="mt-3 mb-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 font-mono text-xs text-text-faint"
+            aria-label="Topics"
+          >
+            {topics.map((topic) => (
+              <li>[{topic}]</li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+
+    <hr class="my-8" />
+
+    <div class="prose">
+      <Content components={mdxKit} />
+    </div>
+
+    <RepoCta repo={repo} />
+  </article>
+</BaseLayout>
