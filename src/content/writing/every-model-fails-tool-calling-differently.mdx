@@ -1,0 +1,141 @@
+---
+slug: every-model-fails-tool-calling-differently
+title: Every model fails tool calling differently
+date: 2026-06-06
+description: >-
+  Tool calling is the load-bearing primitive of every agent stack, and open
+  models break it in at least eleven distinguishable ways. Naming the failure
+  modes changes how you build the layer above.
+tags:
+  - tool calling
+  - evals
+  - vllm
+  - gateways
+---
+
+Every agent system, no matter how elaborate the planning loop on top, bottoms
+out in the same hop: the model emits a structured tool invocation, the runtime
+parses it, something executes. That hop is the load-bearing wall. When it is
+unreliable, the failure surfaces three layers up — the loop stalls, the retry
+budget drains, the task half-completes — and the postmortem blames the
+prompts, the orchestration, the temperature, anything but the wire format.
+
+I spent enough evenings reading transcripts from open models served on my own
+GPUs to stop believing in "supports tool calling" as a binary. The model card
+says yes. The wire says: it depends which model, on which task shape, on which
+of about a dozen distinct things went wrong. One model answers in confident
+prose and never emits the call. Another calls the right tool with `"42"`
+where the schema demands the integer `42`. A third, asked for three calls in
+parallel, fuses them into one malformed hybrid. These are different defects
+with different fixes, and a pass/fail score erases the difference.
+
+So I built [callcheck](/projects/callcheck/) to measure the layer everyone
+assumes: a conformance matrix for tool calling and structured output on
+vLLM-served open models.
+
+## conformance is prior to quality
+
+The benchmark everyone wants is agentic: give the model a loop, score task
+completion. The trouble is that the score then measures the loop, the
+prompts, the retry policy, and the model simultaneously — and usually needs a
+judge model to read the result, which imports a second model's opinion into
+the denominator.
+
+Conformance is the narrower question underneath: did the model emit a
+parseable, schema-valid, semantically coherent call *on the wire*. If it
+didn't, no downstream quality is possible, full stop. And narrow means
+mechanically checkable. callcheck's checkers run three stages in strict
+order — parse, then jsonschema validation, then semantic predicates — and a
+failure stops at the first stage it cannot pass. The stage is the diagnosis.
+No judge anywhere in the scoring path, so two runs of the matrix agree with
+each other.
+
+## eleven ways to fail
+
+Failures land in exactly one label. The taxonomy is the project's stable
+vocabulary:
+
+| label | what happened on the wire |
+| --- | --- |
+| `no_call` | answered in prose, called nothing |
+| `wrong_tool` | called a tool — the wrong one |
+| `malformed_json` | arguments failed to parse at all |
+| `schema_violation` | parsed, failed jsonschema |
+| `hallucinated_param` | passed an argument the schema doesn't define |
+| `missing_required` | required argument absent |
+| `type_coercion` | right field, wrong type — `"42"` for `42` |
+| `escaping_error` | quoting or escaping mangled the payload |
+| `truncation` | call cut off mid-emission |
+| `parallel_collapse` | N requested calls emitted as one |
+| `spurious_call` | called a tool when none was needed |
+
+Mutual exclusivity is the point. The first version of the scorer returned
+pass/fail plus a reason string, and reason strings do not aggregate:
+`malformed_json` and `schema_violation` blurred into "bad output," and matrix
+cells stopped being comparable across models — which is the entire job of a
+matrix. Designing the failure vocabulary *before* collecting failures was the
+correction, and re-labeling old transcripts under it changed conclusions I
+had already half-believed. That dead end is written up in the
+[case study](/projects/callcheck/).
+
+The corpus leans deliberately into the ugly cases: parallel calls, nested
+objects, enums, unicode arguments, int64 boundaries, `$ref` schemas — forty
+to fifty task definitions where the happy path is one row and the edge cases
+are the dataset.
+
+## one sample is a rumor
+
+Decoding is sampled. Serving is batched. The same model, the same task, the
+same afternoon can produce a clean call and then a mangled one. At k=1 a
+matrix cell is an anecdote; I watched cells flip between runs often enough to
+distrust every single-shot tool-calling table I have ever seen published.
+
+callcheck runs every cell at k=3 minimum, and the runner is resumable per
+cell, because honest matrices are long and GPUs are interruptible. Three
+samples is still small — which is exactly why the results have to be read as
+intervals rather than points. Three passes out of three is not "100%"; a
+binomial confidence interval at that k is wide, and the width is information.
+When the full matrix runs land, the rates ship with intervals attached, and a
+cell whose interval spans "fine" and "broken" gets reported as exactly that.
+The alternative — running k=1 because compute is precious — is how noise gets
+published with a straight face.
+
+And before any model gets scored, the scorer itself has to pass: an in-repo
+mock server replays known tool-call outputs, well-formed and deliberately
+malformed, and CI asserts the checkers assign exactly the expected labels. A
+conformance harness with an unverified scorer is opinion with YAML. Of
+callcheck's 165 tests, most are this.
+
+The matrix numbers for real models are pending runs on local GPUs. No cell
+gets filled in by hand.
+
+## what this means for the router
+
+Here is where the taxonomy stops being descriptive and starts paying rent.
+If conformance varies per model and per task shape — and it visibly does —
+then the gateway in front of your models is the natural place where that
+knowledge becomes policy.
+
+- **Failure labels imply retry semantics.** `malformed_json` and `truncation`
+  are sampling artifacts; re-rolling the same model is reasonable.
+  `wrong_tool` and `parallel_collapse` are capability gaps; re-rolling buys
+  nothing, and the correct move is falling back to a different model.
+  A router that only sees HTTP status codes cannot make that distinction.
+- **Retries must happen before the first byte is committed downstream.** Once
+  you have started relaying a stream to the caller, the fallback window is
+  closed. This is why [patchbay](/projects/patchbay/) — the single-binary
+  gateway I run in front of my own models — does jittered retries strictly
+  pre-first-byte, and relays SSE byte-faithfully after that.
+- **A conformance matrix is routing metadata.** "Don't send parallel-call
+  workloads to a model that collapses them" is a routing rule waiting for a
+  table to read it from. The matrix callcheck produces is shaped to be
+  consumed by exactly that kind of policy.
+
+Measure the primitive, then let the infrastructure act on the measurement.
+The alternative is what most stacks do today: assume the primitive, and debug
+the assumption one stalled agent loop at a time.
+
+<RepoCta
+  repo="https://github.com/slatino-dev/callcheck"
+  note="Tasks as YAML, three-stage checkers, the 11-label taxonomy, a resumable k=3 runner, and a mock server that proves the scorer — 165 tests."
+/>
